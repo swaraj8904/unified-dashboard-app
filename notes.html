@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartNotes | Neumorphic Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- Root Variables (Light Mode) --- */
+        :root {
+            --bg-color: #f0f3f9;
+            --card-bg: #e9ecf4;
+            --list-bg: #e0e3ed; 
+            --text-color: #556070;
+            --subtle-text: #6b778d;
+            --border-color: #d1d9e6;
+            --shadow-light: #ffffff;
+            --shadow-dark: #b1c1d8;
+            
+            --primary-color: #4A90E2; 
+            --primary-light: #e9f2fc;
+            --danger-color: #FF6B6B; 
+            --success-color: #7ED321;
+            --info-color: #4A90E2; 
+            
+            /* Sidebar expansion config */
+            --sidebar-width-collapsed: 70px;
+            --sidebar-width-expanded: 220px;
+        }
+
+        /* --- Dark Mode Variables --- */
+        body.dark-mode {
+            --bg-color: #1a202c;
+            --card-bg: #2d3748;
+            --list-bg: #212c3b; 
+            --text-color: #edf2f7;
+            --subtle-text: #a0aec0;
+            --border-color: #4a5568;
+            --shadow-light: #444c5d;
+            --shadow-dark: #12161f;
+            
+            --primary-color: #63b3ed; 
+            --primary-light: #2c5282;
+            --danger-color: #ff8b8b;
+            --success-color: #9cd659;
+            --info-color: #63b3ed; 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Neumorphic Mixins --- */
+        .neumorphic-icon-btn {
+            background-color: var(--card-bg);
+            border: none;
+            color: var(--subtle-text);
+            cursor: pointer; 
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            font-size: 1rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            transition: all 0.2s;
+        }
+        .neumorphic-icon-btn:hover {
+            color: var(--primary-color);
+            transform: translateY(-1px);
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+        }
+        .neumorphic-icon-btn:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(1px) scale(0.98);
+        }
+        
+        .neumorphic-btn-flat {
+            padding: 8px 18px; 
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--card-bg);
+            color: var(--subtle-text);
+        }
+        .neumorphic-btn-flat:hover {
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+        }
+        .neumorphic-btn-flat:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(2px) scale(0.98);
+        }
+        .neumorphic-btn-flat.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .neumorphic-btn-flat.danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        /* --- Sidebar & Hover Collapse Logic (Applies to #sidebar and #list-panel) --- */
+        #sidebar {
+            width: var(--sidebar-width-collapsed); 
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            box-shadow: 4px 0 8px var(--shadow-dark);
+            z-index: 10;
+            align-items: center; 
+            padding: 20px 0 10px 0;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden; 
+        }
+        
+        /* List panel styling (Pages/Subpages) - MIDDLE LEFT */
+        #list-panel {
+            width: var(--sidebar-width-collapsed); 
+            background-color: var(--list-bg);
+            border-right: 1px solid var(--border-color); 
+            border-left: none; 
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 5;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden; 
+            box-shadow: 4px 0 8px var(--shadow-dark);
+        }
+
+        /* NEW UTILITY PANEL - FAR RIGHT */
+        #utility-panel {
+            width: var(--sidebar-width-collapsed); 
+            background-color: var(--card-bg);
+            /* Border separating it from the Editor */
+            border-left: 1px solid var(--border-color); 
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            /* Shadow cast onto the Editor */
+            box-shadow: -4px 0 8px var(--shadow-dark); 
+            z-index: 10;
+            align-items: center; 
+            padding: 20px 0 10px 0;
+            /* Using a smooth transition for width just in case it's expanded later */
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden; 
+        }
+        
+        /* Expansion on Hover (Desktop Only) */
+        @media (min-width: 769px) {
+            #sidebar:hover {
+                width: var(--sidebar-width-expanded);
+            }
+            #list-panel:hover {
+                width: var(--sidebar-width-expanded);
+            }
+            /* Enable hover for the new utility panel */
+            #utility-panel:hover {
+                width: var(--sidebar-width-expanded);
+            }
+        }
+        
+        /* Header - Notebook Sidebar */
+        .sidebar-header { 
+            font-size: 1.6rem; 
+            color: var(--primary-color);
+            height: 0; 
+            padding: 0; 
+            margin-bottom: 0;
+            overflow: hidden;
+            transition: height 0.3s ease, padding 0.3s ease, margin-bottom 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; 
+        }
+        
+        #sidebar:hover .sidebar-header {
+            height: 35px; 
+            padding-left: 10px; 
+            margin-bottom: 25px; 
+        }
+
+        .sidebar-header i {
+            flex-shrink: 0;
+            width: 50px; 
+            text-align: center;
+        }
+        
+        .sidebar-header h1 {
+            display: none; 
+            opacity: 0;
+            width: 0;
+            pointer-events: none; 
+            transition: opacity 0.2s ease 0.1s, width 0.3s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            margin-left: 5px;
+        }
+        
+        #sidebar:hover .sidebar-header h1 {
+            display: block; 
+            opacity: 1;
+            width: auto;
+            pointer-events: auto; 
+        }
+        
+        /* --- Add Notebook Button in Sidebar --- */
+        #sidebar #add-notebook-btn {
+            /* Style for collapsed state */
+            width: 45px;
+            height: 45px;
+            margin-bottom: 20px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            justify-content: center;
+        }
+
+        #sidebar:hover #add-notebook-btn {
+            /* Style for expanded state */
+            width: calc(100% - 20px);
+            border-radius: 10px;
+            justify-content: flex-start;
+            padding: 0 15px;
+        }
+
+        #sidebar #add-notebook-btn .btn-text,
+        #utility-panel #add-environment-btn .btn-text {
+            opacity: 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            transition: opacity 0.2s ease, width 0.3s ease, margin-left 0.3s ease;
+            white-space: nowrap;
+            pointer-events: none;
+            width: 0;
+            overflow: hidden;
+        }
+
+        #sidebar:hover #add-notebook-btn .btn-text,
+        #utility-panel:hover #add-environment-btn .btn-text {
+            opacity: 1;
+            width: auto;
+            margin-left: 12px;
+        }
+
+        #sidebar #add-notebook-btn i,
+        #utility-panel #add-environment-btn i {
+            transition: margin 0.3s ease;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+
+        #sidebar:hover #add-notebook-btn:hover .btn-text {
+            color: var(--primary-color);
+        }
+
+        /* --- Add Environment Button in Utility Panel --- */
+        #utility-panel #add-environment-btn {
+            width: 45px;
+            height: 45px;
+            margin-bottom: 20px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            justify-content: center;
+        }
+
+        #utility-panel:hover #add-environment-btn {
+            width: calc(100% - 20px);
+            border-radius: 10px;
+            justify-content: flex-start;
+            padding: 0 15px;
+        }
+        
+        #utility-panel:hover #add-environment-btn:hover .btn-text {
+            color: var(--primary-color);
+        }
+
+        /* Navigation (Notebooks) */
+        .sidebar-menu { 
+            overflow-y: auto; 
+            flex-grow: 1; 
+            padding: 0 10px 10px 10px; 
+            width: 100%;
+        }
+        .menu-header { display: none; } 
+        .menu-list { list-style: none; padding: 0; width: 100%; }
+        
+        /* Notebook Item Widget */
+        .menu-list-item {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start; 
+            align-items: center;
+            margin-bottom: 8px; 
+            position: relative; 
+        }
+        .menu-list-item a {
+            all: unset; 
+            cursor: pointer;
+            display: flex; 
+            align-items: center; 
+            width: 100%;
+            height: 45px; 
+            border-radius: 10px; 
+            color: var(--subtle-text); 
+            background-color: var(--list-bg);
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light); 
+            font-size: 1.2rem; 
+            position: relative;
+            transition: all 0.2s;
+            padding: 0 10px;
+            text-align: center; 
+            font-weight: 600;
+        }
+
+        .menu-list-item .delete-notebook-btn {
+            position: absolute; 
+            top: 50%; 
+            right: 10px;
+            transform: translateY(-50%);
+
+            background-color: transparent; 
+            border: none; 
+            color: var(--danger-color); 
+            cursor: pointer;
+            width: 25px; 
+            height: 25px; 
+            font-size: 0.8rem; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            opacity: 0; 
+            transition: opacity 0.2s;
+            z-index: 20; 
+            border-radius: 4px;
+            
+            box-shadow: inset 1px 1px 2px var(--shadow-dark), inset -1px -1px 2px var(--shadow-light);
+            background-color: var(--card-bg); 
+        }
+        
+        /* Rename button for active item */
+        .menu-list-item .rename-notebook-btn {
+            position: absolute;
+            top: 50%;
+            right: 40px; 
+            transform: translateY(-50%);
+            
+            background-color: transparent;
+            border: none;
+            color: var(--subtle-text);
+            cursor: pointer;
+            width: 25px;
+            height: 25px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 20;
+            border-radius: 4px;
+            
+            box-shadow: inset 1px 1px 2px var(--shadow-dark), inset -1px -1px 2px var(--shadow-light);
+            background-color: var(--card-bg);
+        }
+        .menu-list-item .rename-notebook-btn:hover {
+            color: var(--primary-color);
+        }
+
+        /* Visibility control (Still controls rename/delete on the list items in the main sidebar) */
+        #sidebar:not(:hover) .menu-list-item .delete-notebook-btn,
+        #sidebar:not(:hover) .menu-list-item .rename-notebook-btn,
+        #utility-panel:not(:hover) .menu-list-item .delete-notebook-btn,
+        #utility-panel:not(:hover) .menu-list-item .rename-notebook-btn {
+             display: none; 
+        }
+        
+        /* Show delete button when the list item itself is hovered */
+        #sidebar:hover .menu-list-item:hover .delete-notebook-btn,
+        #utility-panel:hover .menu-list-item:hover .delete-notebook-btn {
+            opacity: 1; 
+        }
+        
+        /* Show rename button on active item only when sidebar is expanded */
+        #sidebar:hover .menu-list-item.active .rename-notebook-btn,
+        #utility-panel:hover .menu-list-item.active .rename-notebook-btn {
+            opacity: 1;
+            color: white;
+            background-color: var(--primary-color); 
+            box-shadow: 1px 1px 2px var(--shadow-dark), -1px -1px 2px var(--shadow-light);
+        }
+
+        .menu-list-item .delete-notebook-btn:hover {
+            color: var(--danger-color);
+            background-color: var(--primary-light);
+        }
+        
+        /* Ensure the delete button is always visible on the ACTIVE item when expanded */
+        #sidebar:hover .menu-list-item.active .delete-notebook-btn,
+        #utility-panel:hover .menu-list-item.active .delete-notebook-btn {
+            color: var(--danger-color); 
+            background-color: white; 
+            opacity: 1;
+        }
+        
+        .menu-list-item a i {
+             display: none;
+        }
+
+        /* Initials placeholder for collapsed state */
+        .menu-list-item a .initials-placeholder {
+            opacity: 1;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            font-size: 0.8rem; 
+            font-weight: 600;
+            
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+            line-height: 45px; 
+        }
+        
+        #sidebar:hover .menu-list-item a .initials-placeholder,
+        #utility-panel:hover .menu-list-item a .initials-placeholder {
+            opacity: 0; 
+            display: none;
+        }
+        
+        /* Full Name placeholder for expanded state */
+        .menu-list-item a::after {
+            content: attr(title);
+            opacity: 0;
+            transition: opacity 0.2s ease 0.1s;
+            white-space: nowrap;
+            overflow: hidden;
+            font-size: 0.9rem;
+            font-weight: 500;
+            
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+        
+        #sidebar:hover .menu-list-item a::after,
+        #utility-panel:hover .menu-list-item a::after {
+            opacity: 1;
+            padding-left: 10px;
+            text-align: left;
+            position: relative;
+            left: 0;
+            right: auto;
+        }
+        
+        /* Active/Hover states */
+        .menu-list-item a:hover { 
+            color: var(--primary-color); 
+            background-color: var(--card-bg); 
+            box-shadow: inset 1px 1px 3px var(--shadow-dark), inset -1px -1px 3px var(--shadow-light);
+        }
+        .menu-list-item.active a { 
+            background-color: var(--primary-color); 
+            color: white; 
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+        .menu-list-item.active a:hover {
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            background-color: var(--primary-color); 
+            opacity: 0.95;
+        }
+
+        /* --- List Panel (Pages/Subpages Sidebar) --- */
+        .list-header {
+            padding: 15px 10px; 
+            border-bottom: 1px solid var(--border-color);
+            display: flex; 
+            justify-content: flex-end; 
+            align-items: center;
+            flex-shrink: 0;
+            gap: 8px; 
+        }
+        #list-panel:not(:hover) .list-header {
+             justify-content: center; 
+        }
+        .list-header h2 { display: none; } 
+        
+        .list-items { 
+            overflow-y: auto; 
+            flex-grow: 1; 
+            padding: 0 10px; 
+        }
+        /* Custom styles for search results to show notebook context */
+        .note-card-wrapper.search-result {
+            margin-top: 10px;
+            padding-top: 0;
+        }
+        .note-card-wrapper.search-result .notebook-context {
+            font-size: 0.75rem;
+            color: var(--primary-color);
+            margin-bottom: 3px;
+            font-weight: 600;
+            padding-left: 10px;
+            display: none;
+        }
+        #list-panel:hover .note-card-wrapper.search-result .notebook-context {
+             display: block; 
+        }
+        
+        .note-card-wrapper {
+            padding: 3px 0; 
+            width: 100%;
+            position: relative; 
+            display: flex;
+            flex-direction: column; 
+            justify-content: flex-start; 
+        }
+        
+        /* NEW: Floating Sub-Page Button Wrapper */
+        .subpage-add-wrapper {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 100%; 
+            display: flex;
+            justify-content: flex-start;
+            padding-top: 2px;
+            z-index: 10;
+        }
+
+        /* NEW: Floating Sub-Page Button (small, indented, context-aware) */
+        .subpage-add-btn {
+            background-color: var(--primary-light);
+            border: 1px solid var(--border-color);
+            color: var(--subtle-text);
+            cursor: pointer;
+            width: 100px;
+            height: 25px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            font-size: 0.75rem;
+            padding: 0 5px;
+            transition: all 0.2s;
+            box-shadow: 2px 2px 4px var(--shadow-dark);
+            transform-origin: top left;
+        }
+
+        .subpage-add-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 3px 3px 6px var(--shadow-dark);
+        }
+        .subpage-add-btn i {
+            margin-right: 5px;
+            font-size: 0.7rem;
+        }
+
+
+        
+        #list-panel:not(:hover) .note-card-wrapper {
+             align-items: center;
+        }
+        
+        /* Note Item Widget (Subpages) */
+        .note-card {
+            border-radius: 10px; 
+            cursor: pointer;
+            position: relative; 
+            transition: all 0.2s;
+            background-color: var(--card-bg);
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+            
+            width: 100%; 
+            height: 45px; 
+            
+            display: flex;
+            align-items: center;
+            text-align: left;
+            overflow: hidden;
+            
+            padding-right: 10px; 
+        }
+        
+        /* Hierarchy and Indentation CSS */
+        .note-card .hierarchy-toggle {
+            margin-right: 8px;
+            font-size: 0.75rem;
+            color: var(--subtle-text);
+            transition: transform 0.2s;
+            width: 15px; 
+            text-align: center;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .note-card:not(.parent) .hierarchy-toggle {
+            opacity: 0; 
+            pointer-events: none;
+        }
+        .note-card.parent-expanded .hierarchy-toggle {
+            transform: rotate(90deg);
+        }
+
+        /* Indentation levels (Level 0 starts at 10px padding) */
+        .note-card[data-level="0"] { padding-left: 10px; }
+        .note-card[data-level="1"] { padding-left: 20px; }
+        .note-card[data-level="2"] { padding-left: 30px; }
+        .note-card[data-level="3"] { padding-left: 40px; }
+        
+        #list-panel:not(:hover) .note-card {
+            width: 50px; 
+            justify-content: center;
+            padding-left: 0 !important; 
+        }
+        #list-panel:not(:hover) .note-card .hierarchy-toggle {
+            display: none; 
+        }
+        
+        
+        /* Show text content on list panel hover */
+        .note-card h3, .note-card p { display: none; } 
+
+        /* Hide the icon when expanded, show text */
+        .note-card i.note-icon {
+            font-size: 1.2rem;
+            color: var(--subtle-text);
+            transition: color 0.2s;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+        
+        #list-panel:hover .note-card i.note-icon {
+             opacity: 0;
+             width: 0;
+             padding: 0;
+             margin: 0;
+        }
+        
+        .note-card.active i.note-icon {
+            color: var(--primary-color);
+        }
+        
+        /* Hide the text placeholder span when collapsed */
+        .note-card span.note-name-placeholder {
+            opacity: 0;
+            transition: opacity 0.2s ease 0.1s;
+            white-space: nowrap;
+            overflow: hidden;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-color);
+            flex-grow: 1; 
+        }
+        
+        /* Show name placeholder when expanded */
+        #list-panel:hover .note-card span.note-name-placeholder {
+             opacity: 1;
+        }
+        /* Hide name placeholder when collapsed */
+        #list-panel:not(:hover) .note-card span.note-name-placeholder {
+            display: none;
+        }
+        
+        /* Icon placeholder for collapsed state (CSS ::before) */
+        .note-card::before {
+            content: "\f15c"; 
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: var(--subtle-text);
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+            width: 45px;
+            text-align: center;
+            opacity: 1; 
+            transition: opacity 0.3s;
+        }
+        
+        #list-panel:hover .note-card::before {
+            opacity: 0; 
+        }
+
+        .note-card.active::before {
+            color: var(--primary-color);
+        }
+
+
+        .note-card:hover { 
+            background-color: var(--primary-light); 
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+        .note-card.active { 
+            background-color: var(--bg-color);
+            border: 1px solid var(--primary-color); 
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
+        
+        /* Delete Button - Note */
+        .delete-note-btn { 
+            position: absolute; 
+            top: 2px; 
+            right: 2px; 
+            background: none; 
+            border: none; 
+            color: var(--danger-color); 
+            cursor: pointer;
+            width: 14px; 
+            height: 14px; 
+            font-size: 0.6rem;
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            opacity: 0; 
+            transition: opacity 0.2s;
+            z-index: 15; 
+            box-shadow: inset 1px 1px 2px var(--shadow-dark); 
+            border-radius: 4px;
+        }
+        .note-card:hover .delete-note-btn { opacity: 1; } 
+        #list-panel:not(:hover) .delete-note-btn { display: none !important; } 
+        .delete-note-btn:hover { color: var(--danger-color); transform: scale(1.1); opacity: 1; }
+        
+        .empty-list-message { text-align: center; padding: 40px; color: var(--subtle-text); }
+        
+        /* --- Editor Panel --- */
+        #editor-panel {
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh;
+            min-width: 0; 
+            overflow: hidden; 
+            z-index: 1; 
+        }
+        #active-editor { 
+            display: flex; 
+            flex-direction: column; 
+            flex-grow: 1;
+            min-height: 0;
+            position: relative;
+        }
+        #empty-state { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; color: var(--subtle-text); }
+        #empty-state i { font-size: 4rem; margin-bottom: 20px; color: var(--primary-color); }
+
+        /* PERSISTENT HEADER */
+        .editor-header { 
+            padding: 10px 30px; 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            flex-shrink: 0;
+            gap: 20px; 
+        }
+        
+        /* Search Container Styling */
+        .search-container {
+             flex-grow: 1; 
+             max-width: 400px; 
+             flex-shrink: 1; 
+             display: flex;
+             align-items: center;
+        }
+
+        .search-container #note-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            transition: box-shadow 0.2s;
+        }
+        .search-container #note-search-input:focus {
+            outline: none;
+            box-shadow: inset 0 0 0 2px var(--primary-color), inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+        
+        /* Formatting Toolbar Visibility */
+        .editor-toolbar { 
+            display: flex; gap: 6px; 
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            flex-shrink: 0; 
+            margin-left: 20px; 
+            margin-right: 0; 
+        }
+        .editor-toolbar.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .editor-toolbar button {
+            all: unset;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 30px; 
+            height: 30px; 
+            border-radius: 6px; 
+            font-size: 0.9rem; 
+            color: var(--subtle-text);
+            background-color: var(--card-bg);
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+            transition: all 0.2s;
+        }
+        .editor-toolbar button:hover {
+            color: var(--primary-color);
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+        .editor-toolbar button:active {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            transform: scale(0.95);
+        }
+        
+        .utility-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .utility-actions .neumorphic-icon-btn {
+            width: 30px;
+            height: 30px;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+        .utility-actions .neumorphic-icon-btn:hover {
+            transform: translateY(-1px);
+        }
+        .utility-actions input[type="file"] {
+            display: none;
+        }
+
+
+        .editor-body { 
+            display: flex; 
+            flex-direction: column; 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            align-items: center; 
+            padding: 20px; 
+            width: 100%;
+            position: relative;
+        }
+        #note-title-input {
+            border: none; 
+            background: transparent; 
+            color: var(--text-color);
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            padding: 10px 0;
+            flex-shrink: 0; 
+            width: 100%; 
+            max-width: 100%; 
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+        #note-title-input:focus { 
+            outline: none; 
+            border-bottom-color: var(--primary-color);
+        }
+        
+        #note-content-editor {
+            font-size: 1.1rem; 
+            line-height: 1.8; 
+            padding: 25px;
+            outline: none; 
+            user-select: text;
+            width: 100%; 
+            max-width: 100%; 
+            background-color: var(--bg-color);
+            border-radius: 15px;
+            box-shadow: inset 8px 8px 16px var(--shadow-dark), inset -8px -8px 16px var(--shadow-light);
+            transition: box-shadow 0.3s;
+        }
+        #note-content-editor:focus { 
+            box-shadow: inset 0 0 0 3px var(--primary-color), inset 8px 8px 16px var(--shadow-dark), inset -8px -8px 16px var(--shadow-light); 
+        }
+        #note-content-editor:empty::before {
+            content: attr(data-placeholder);
+            color: var(--subtle-text);
+            cursor: text;
+            pointer-events: none;
+        }
+        #note-content-editor img {
+            max-width: 100%;
+            height: auto !important;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            cursor: pointer;
+            display: block;
+        }
+
+        #note-content-editor .image-wrapper {
+            position: relative;
+            display: inline-block;
+            line-height: 0; /* remove extra space below image */
+            border: 2px dashed transparent;
+            transition: border-color 0.2s;
+        }
+
+        #note-content-editor .image-wrapper.active {
+             border-color: var(--primary-color);
+        }
+
+        #note-content-editor .image-wrapper img {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            z-index: 10;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-wrapper.active .resize-handle {
+            opacity: 1;
+        }
+
+        .resize-handle.br { /* Bottom-right */
+            bottom: -6px;
+            right: -6px;
+            cursor: nwse-resize;
+        }
+
+        /* Table Styles */
+        #note-content-editor table {
+            width: 100%;
+            margin: 1em 0;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden; /* To make border-radius work on table */
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+
+        #note-content-editor th, 
+        #note-content-editor td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        #note-content-editor th {
+            background-color: var(--list-bg);
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        
+        /* --- Code Block Styles --- */
+        #note-content-editor .code-block-wrapper {
+            position: relative;
+            margin: 1.5em 0;
+            background-color: #2d3748; /* Dark background for code */
+            border-radius: 10px;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            overflow: hidden;
+        }
+
+        #note-content-editor td .code-block-wrapper,
+        #note-content-editor th .code-block-wrapper {
+            margin: 0;
+        }
+
+        #note-content-editor pre.code-block {
+            background-color: transparent; /* Wrapper has the background now */
+            padding: 20px;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            box-shadow: none; /* Shadow is on the wrapper */
+            color: #edf2f7; /* Light text on dark background */
+            outline: none;
+        }
+        
+        #note-content-editor .copy-code-btn,
+        #note-content-editor .delete-code-btn {
+            position: absolute;
+            top: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            opacity: 0.5;
+            transition: opacity 0.2s, background-color 0.2s, color 0.2s;
+            z-index: 5;
+        }
+
+        #note-content-editor .copy-code-btn {
+            right: 8px;
+            color: #a0aec0;
+        }
+
+        #note-content-editor .delete-code-btn {
+            right: 46px; /* Position next to copy button */
+            color: var(--danger-color);
+        }
+
+        #note-content-editor .code-block-wrapper:hover .copy-code-btn,
+        #note-content-editor .code-block-wrapper:hover .delete-code-btn {
+            opacity: 1;
+        }
+
+        #note-content-editor .copy-code-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+        
+        #note-content-editor .delete-code-btn:hover {
+            background-color: rgba(255, 107, 107, 0.2);
+            color: #ff8b8b;
+        }
+
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); 
+            display: flex; justify-content: center; align-items: center; z-index: 1000; 
+            opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            color: var(--text-color);
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+        }
+        .modal-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--danger-color);
+        }
+        .modal-content p {
+            margin-bottom: 25px;
+            color: var(--subtle-text);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Fullscreen Mode */
+        body.fullscreen-mode #sidebar,
+        body.fullscreen-mode #list-panel,
+        body.fullscreen-mode #utility-panel {
+            width: 0 !important; /* Use !important to override other styles */
+            padding-left: 0;
+            padding-right: 0;
+            overflow: hidden;
+            border: none;
+            box-shadow: none;
+        }
+
+        body.fullscreen-mode #editor-panel {
+            width: 100vw;
+        }
+        
+        /* Utility Panel Title */
+        .utility-title {
+            opacity: 0;
+            transition: opacity 0.2s ease 0.1s;
+            font-size: 1rem;
+            color: var(--subtle-text);
+            margin-top: 20px;
+        }
+
+        #utility-panel:hover .utility-title {
+            opacity: 1;
+        }
+        
+        /* --- Table Toolbar --- */
+        #table-toolbar {
+            position: absolute;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+            display: flex;
+            gap: 5px;
+            padding: 5px;
+            z-index: 100;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+
+        #table-toolbar.active {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #table-toolbar button {
+            all: unset;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--subtle-text);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        #table-toolbar button:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+        #table-toolbar button[data-command="delete-table"]:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+
+        /* --- RESPONSIVE FIXES --- */
+        @media (max-width: 768px) {
+            
+            #sidebar, #list-panel, #utility-panel { /* Include new panel */
+                width: 100%; 
+                transition: none;
+            }
+            
+            body { 
+                flex-direction: column; 
+                height: auto;
+                overflow-y: auto; 
+            }
+            
+            #sidebar, #list-panel, #editor-panel {
+                min-height: 400px; 
+                width: 100%; 
+            }
+
+            /* Hide the Utility Panel on Mobile to avoid clutter */
+            #utility-panel {
+                display: none; 
+            }
+            
+            #sidebar {
+                 height: 80px;
+                 flex-direction: row;
+                 justify-content: space-between;
+                 align-items: center;
+                 border-right: none;
+                 border-bottom: 1px solid var(--border-color);
+                 overflow-x: auto;
+                 padding: 0 10px;
+            }
+            .sidebar-header { display: none; } 
+            .sidebar-menu { flex-grow: 0; padding: 0; }
+            .menu-list { display: flex; }
+            .menu-list-item { margin-bottom: 0; flex-shrink: 0; }
+            .menu-list-item a { margin: 5px; width: 45px; height: 45px; font-size: 1.2rem; }
+            .menu-list-item a::after { display: none !important; } 
+            
+            #list-panel {
+                 width: 100%;
+                 position: relative;
+                 left: 0;
+                 border-left: none; 
+                 border-right: none; /* New: clear right border on mobile */
+                 border-bottom: 1px solid var(--border-color);
+                 flex-direction: row;
+                 height: 80px;
+                 overflow-x: auto;
+            }
+            .list-header { display: none; } 
+            .list-items { padding: 0; display: flex; flex-direction: row; align-items: center; }
+            .note-card-wrapper { flex-shrink: 0; }
+            .note-card { margin: 5px; width: 45px; height: 45px; }
+            .note-card h3::before { font-size: 1.4rem; }
+            .note-card::after { display: none !important; } 
+            
+            .note-card-wrapper.search-result .notebook-context {
+                display: none !important; 
+            }
+            .note-card .hierarchy-toggle {
+                display: none !important; 
+            }
+        }
+        
+        /* Desktop/Tablet Layout */
+        @media (min-width: 769px) {
+            body { 
+                flex-direction: row; 
+                overflow: hidden; 
+                height: 100vh; 
+            }
+            #sidebar { 
+                height: 100%; 
+                flex-direction: column; 
+                border-right: 1px solid var(--border-color); 
+            } 
+            #list-panel { 
+                height: 100%; 
+                /* Ensures vertical positioning is correct */
+                border-right: 1px solid var(--border-color);
+            } 
+            #editor-panel { 
+                flex-grow: 1; 
+                height: 100%; 
+            }
+            #utility-panel {
+                 height: 100%; 
+                 flex-direction: column;
+            }
+        }
+
+    </style>
+</head>
+<body onselectstart="return true;" ondragstart="return true;"> 
+    <aside id="sidebar">
+        <button id="add-notebook-btn" class="neumorphic-icon-btn" title="New Notebook">
+            <i class="fa-solid fa-plus"></i>
+            <span class="btn-text">New Notebook</span>
+        </button>
+
+        <nav class="sidebar-menu">
+            <div class="menu-section">
+                <div class="menu-header">
+                    <span>Notebooks</span>
+                </div>
+                <ul class="menu-list" id="notebooks-list"></ul>
+            </div>
+        </nav>
+    </aside>
+
+    <section id="list-panel">
+        <header class="list-header" id="list-header"></header>
+        <div class="list-items" id="list-items"></div>
+    </section>
+
+    <main id="editor-panel">
+        <header class="editor-header">
+            
+            <div class="search-container">
+                <input type="text" id="note-search-input" placeholder="Search all notes globally...">
+            </div>
+            
+            <div id="editor-toolbar" class="editor-toolbar">
+                <button data-command="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                <button data-command="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                <button data-command="insertUnorderedList" title="Bulleted List"><i class="fa-solid fa-list-ul"></i></button>
+                <button data-command="insertOrderedList" title="Numbered List"><i class="fa-solid fa-list-ol"></i></button>
+                <button data-command="insertTable" title="Insert Table"><i class="fa-solid fa-table"></i></button>
+                <button data-command="insertCodeBlock" title="Code Block"><i class="fa-solid fa-code"></i></button>
+            </div>
+            
+            <div class="utility-actions">
+                <button id="fullscreen-toggle-btn" class="neumorphic-icon-btn" title="Toggle Fullscreen">
+                    <i class="fa-solid fa-expand"></i>
+                </button>
+                <button id="theme-toggle-btn" class="neumorphic-icon-btn" title="Toggle Theme">
+                    <i class="fas fa-moon"></i> 
+                </button>
+                
+                <button id="save-backup-btn" class="neumorphic-icon-btn" title="Save Backup">
+                    <i class="fa-solid fa-download"></i>
+                </button>
+                
+                <label for="load-file-input" id="load-restore-label" class="neumorphic-icon-btn" title="Load Restore">
+                    <i class="fa-solid fa-upload"></i>
+                </label>
+                <input type="file" id="load-file-input" accept=".json" class="hidden">
+            </div>
+
+        </header>
+
+        <div id="active-editor" class="hidden">
+            <div class="editor-body">
+                <div id="table-toolbar">
+                    <button data-command="add-row-above" title="Add Row Above"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button data-command="add-row-below" title="Add Row Below"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button data-command="delete-row" title="Delete Row"><i class="fa-solid fa-minus"></i></button>
+                    <span style="border-left: 1px solid var(--border-color); margin: 0 5px;"></span>
+                    <button data-command="add-col-left" title="Add Column Left"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button data-command="add-col-right" title="Add Column Right"><i class="fa-solid fa-arrow-right"></i></button>
+                    <button data-command="delete-col" title="Delete Column"><i class="fa-solid fa-times"></i></button>
+                    <span style="border-left: 1px solid var(--border-color); margin: 0 5px;"></span>
+                    <button data-command="delete-table" title="Delete Table"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+                <input type="text" id="note-title-input" placeholder="Note Title">
+                <div id="note-content-editor" contenteditable="true" data-placeholder="Start writing..."></div>
+            </div>
+        </div>
+        <div id="empty-state">
+            <i class="fa-solid fa-lightbulb"></i>
+            <h2>Select a note to get started</h2>
+            <p>Or create a new notebook and add a note to it.</p>
+        </div>
+    </main>
+    
+    <aside id="utility-panel">
+        <button id="add-environment-btn" class="neumorphic-icon-btn" title="New Environment">
+            <i class="fa-solid fa-plus-square"></i>
+            <span class="btn-text">New Environment</span>
+        </button>
+
+        <nav class="sidebar-menu">
+            <div class="menu-header">
+                <span>Environments</span>
+            </div>
+            <ul class="menu-list" id="environments-list"></ul>
+        </nav>
+        
+        <h3 class="utility-title" style="margin-top: auto;">Utilities</h3>
+    </aside>
+
+    
+    <div id="notebook-modal" class="modal-overlay"></div>
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Confirm Deletion</h3>
+            <p id="confirm-modal-message">Are you sure you want to delete this note?</p>
+            <div class="modal-actions">
+                <button id="confirm-modal-cancel" class="neumorphic-btn-flat" title="Cancel">Cancel</button>
+                <button id="confirm-modal-ok" class="neumorphic-btn-flat danger" title="Delete">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="table-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 300px;">
+            <h3 style="color: var(--primary-color);">Insert Table</h3>
+            <form id="table-form" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label for="table-rows-input">Rows:</label>
+                    <input type="number" id="table-rows-input" value="3" min="1" max="50" style="width: 60px; padding: 8px; border-radius: 8px; border: none; background-color: var(--list-bg); color: var(--text-color); box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label for="table-cols-input">Columns:</label>
+                    <input type="number" id="table-cols-input" value="3" min="1" max="20" style="width: 60px; padding: 8px; border-radius: 8px; border: none; background-color: var(--list-bg); color: var(--text-color); box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="table-modal-cancel" class="neumorphic-btn-flat">Cancel</button>
+                    <button type="submit" class="neumorphic-btn-flat primary">Insert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+
+    <div id="message-box" style="position: fixed; top: 20px; right: 20px; z-index: 2000; transition: transform 0.3s ease-out, opacity 0.3s ease-out; transform: translateX(120%); opacity: 0; pointer-events: none;">
+        <div id="message-content" class="modal-content" style="max-width: 300px; padding: 15px; font-size: 0.9rem; text-align: center; border-radius: 12px; margin: 0;">
+            <p></p>
+        </div>
+    </div>
+
+    <script>
+    const themeKey = 'app-theme';
+    const environmentsStorageKey = 'smartNotes_environments_neumorphic_v2';
+    const activeEnvironmentKey = 'smartNotes_activeEnvironment_neumorphic_v2';
+    const activeNotebookIdKey = 'smartNotes_activeNotebookId_neumorphic_v2';
+    const activeNoteIdKey = 'smartNotes_activeNoteId_neumorphic_v2';
+
+
+    // --- DASHBOARD COMMUNICATION SCRIPT ---
+    window.addEventListener('message', (event) => {
+        const { action, keys, values, theme } = event.data;
+
+        if (action === 'setTheme') {
+            const isDark = theme === 'dark';
+            document.body.classList.toggle('dark-mode', isDark);
+            localStorage.setItem(themeKey, theme);
+            
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            }
+        }
+
+        if (action === 'getDataForBackup') {
+            const dataKey = environmentsStorageKey;
+            const dataValue = localStorage.getItem(dataKey) || '{}';
+            window.parent.postMessage({
+                action: 'backupDataResponse',
+                key: [dataKey],
+                value: [dataValue]
+            }, '*');
+        }
+
+        if (action === 'restoreData') {
+            try {
+                const dataKey = environmentsStorageKey;
+                const keyIndex = keys.indexOf(dataKey);
+                
+                if (keyIndex !== -1 && values[keyIndex] !== null) {
+                    localStorage.setItem(dataKey, values[keyIndex]);
+                    window.parent.postMessage({ action: 'restoreComplete', file: 'notes.html' }, '*');
+                    setTimeout(() => location.reload(), 250);
+                } else {
+                    window.parent.postMessage({ action: 'restoreComplete', file: 'notes.html' }, '*');
+                }
+            } catch(e) {
+                console.error("Error restoring data for notes.html:", e);
+                window.parent.postMessage({ action: 'restoreComplete', file: 'notes.html' }, '*');
+            }
+        }
+    });
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM ELEMENTS ---
+        const sidebar = document.getElementById('sidebar');
+        const notebooksList = document.getElementById('notebooks-list');
+        const listHeader = document.getElementById('list-header');
+        const listItems = document.getElementById('list-items');
+        const activeEditor = document.getElementById('active-editor');
+        const emptyState = document.getElementById('empty-state');
+        const noteTitleInput = document.getElementById('note-title-input');
+        const noteContentEditor = document.getElementById('note-content-editor');
+        const notebookModal = document.getElementById('notebook-modal');
+        const confirmModal = document.getElementById('confirm-modal');
+        const tableModal = document.getElementById('table-modal'); 
+        const tableToolbar = document.getElementById('table-toolbar'); // New Table Toolbar
+        const confirmModalMessage = document.getElementById('confirm-modal-message');
+        const confirmModalCancel = document.getElementById('confirm-modal-cancel');
+        const confirmModalOk = document.getElementById('confirm-modal-ok');
+        const addNotebookBtn = document.getElementById('add-notebook-btn');
+        const editorToolbar = document.getElementById('editor-toolbar');
+        const messageBox = document.getElementById('message-box');
+        const messageContent = document.getElementById('message-content');
+        
+        // UTILITY & ENVIRONMENT ELEMENTS
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const saveBackupBtn = document.getElementById('save-backup-btn');
+        const loadFileInput = document.getElementById('load-file-input');
+        const searchInput = document.getElementById('note-search-input'); 
+        const utilityPanel = document.getElementById('utility-panel');
+        const addEnvironmentBtn = document.getElementById('add-environment-btn');
+        const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
+        
+        // --- APP STATE ---
+        let environments = {};
+        let activeEnvironmentName = null;
+        let notebooks = []; // This will now represent environments[activeEnvironmentName]
+        let activeNotebookId = null;
+        let activeNoteId = null;
+        let currentTableContext = null; // To store context for table operations
+        
+        function setActiveNote(noteId) {
+            activeNoteId = noteId;
+            localStorage.setItem(activeNoteIdKey, noteId);
+        }
+
+        let pendingDeleteNoteId = null;
+        let pendingDeleteNotebookId = null; 
+        let pendingDeleteEnvironmentName = null;
+        let isRenameMode = false; 
+        let expandedParents = new Set(); // Tracks open note hierarchies
+        
+        // --- UTILITY ---
+        const debounce = (func, delay) => {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        };
+        
+        function showMessage(message, type = 'info', duration = 3000) {
+            const iconClass = {
+                info: 'fa-solid fa-circle-info',
+                success: 'fa-solid fa-check-circle',
+                error: 'fa-solid fa-triangle-exclamation'
+            }[type];
+
+            messageContent.innerHTML = `<i class="${iconClass}" style="margin-right: 8px;"></i> ${message}`;
+            const color = getComputedStyle(document.body).getPropertyValue(`--${type}-color`).trim();
+            messageContent.style.backgroundColor = color || getComputedStyle(document.body).getPropertyValue('--primary-color').trim();
+            messageContent.style.color = type === 'info' ? 'var(--text-color)' : 'white';
+            messageBox.style.transform = 'translateX(0)';
+            messageBox.style.opacity = '1';
+
+            setTimeout(() => {
+                messageBox.style.transform = 'translateX(120%)';
+                messageBox.style.opacity = '0';
+            }, duration);
+        }
+        
+        function buildHierarchy(notes) {
+            const map = new Map();
+            const tree = [];
+            notes.forEach(note => {
+                note.children = [];
+                map.set(note.id, note);
+            });
+            notes.forEach(note => {
+                if (note.parentId !== null && map.has(note.parentId)) {
+                    map.get(note.parentId).children.push(note);
+                } else {
+                    tree.push(note);
+                }
+            });
+            const sortFn = (a, b) => b.id - a.id;
+            const recursiveSort = (nodes) => {
+                nodes.sort(sortFn);
+                nodes.forEach(node => recursiveSort(node.children));
+            };
+            recursiveSort(tree);
+            return tree;
+        }
+
+        function flattenAndOrderNotes(tree, flatList = [], level = 0) {
+            tree.forEach(note => {
+                note.level = level;
+                note.hasChildren = note.children.length > 0;
+                flatList.push(note);
+                if (expandedParents.has(note.id)) {
+                    flattenAndOrderNotes(note.children, flatList, level + 1);
+                }
+            });
+            return flatList;
+        }
+
+
+        // --- THEME LOGIC ---
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            const newTheme = isDark ? 'dark' : 'light';
+            localStorage.setItem(themeKey, newTheme);
+            themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            // Send message to parent dashboard to sync theme across all pages
+            window.parent.postMessage({ action: 'setTheme', theme: newTheme }, '*');
+        }
+
+        // --- BACKUP/RESTORE LOGIC ---
+        function saveToFile() {
+            if (notebooks.length === 0) {
+                showMessage("Cannot save an empty notes file.", "error");
+                return;
+            }
+            const dataToSave = JSON.stringify(notebooks, null, 2);
+            const blob = new Blob([dataToSave], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const formattedDate = `${day}-${month}-${year}`;
+            a.download = `smartnotes-backup-${activeEnvironmentName}-${formattedDate}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showMessage("Notes backup saved!", "success");
+        }
+
+        function loadFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loadedNotebooks = JSON.parse(e.target.result);
+                    if (Array.isArray(loadedNotebooks) && loadedNotebooks.every(nb => nb.id && nb.name && Array.isArray(nb.notes))) {
+                        notebooks = loadedNotebooks;
+                        
+                        // Reset active IDs to point to the new data
+                        activeNotebookId = notebooks[0]?.id || null;
+                        if (activeNotebookId) {
+                            const firstNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+                            setActiveNote(firstNotebook?.notes.sort((a,b) => b.id - a.id)[0]?.id || null);
+                        } else {
+                            setActiveNote(null);
+                        }
+                        
+                        localStorage.setItem(activeNotebookIdKey, activeNotebookId);
+
+                        saveData();
+                        renderAll();
+                        showMessage("Notes successfully restored to current environment!", "success");
+                    } else {
+                        throw new Error("Invalid file format.");
+                    }
+                } catch (error) {
+                    showMessage("Error loading file. Make sure it's a valid Notes JSON file.", "error");
+                    console.error("File loading error:", error);
+                } finally {
+                    event.target.value = null;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- DATA & RENDER FUNCTIONS ---
+        function saveData() {
+            try {
+                environments[activeEnvironmentName] = notebooks;
+                localStorage.setItem(environmentsStorageKey, JSON.stringify(environments));
+		window.parent.postMessage({ action: 'dataUpdated' }, '*');
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || (e.inner && e.inner.name === 'QuotaExceededError')) {
+                    showMessage("Error: Storage limit exceeded. Could not save changes.", "error", 5000);
+                    console.error("Save failed: LocalStorage quota exceeded.", e);
+                } else {
+                    showMessage("An unknown error occurred while saving.", "error");
+                    console.error("Save failed:", e);
+                }
+            }
+        }
+
+        function loadData() {
+            const storedEnvironments = localStorage.getItem(environmentsStorageKey);
+            let loadedData = JSON.parse(storedEnvironments);
+
+            const oldStoredData = localStorage.getItem('smartNotes_notebooks_neumorphic');
+            if (!loadedData && oldStoredData) {
+                const oldNotebooks = JSON.parse(oldStoredData);
+                if (Array.isArray(oldNotebooks)) {
+                    loadedData = { 'Default Environment': oldNotebooks };
+                    localStorage.setItem(environmentsStorageKey, JSON.stringify(loadedData));
+                    localStorage.removeItem('smartNotes_notebooks_neumorphic');
+                    showMessage("Data structure updated!", "info");
+                }
+            }
+            
+            environments = loadedData || {};
+
+            if (Object.keys(environments).length === 0) {
+                 environments = {
+                    'Default': [{ id: Date.now(), name: "Getting Started", notes: [] }]
+                 };
+            }
+
+            const lastActiveEnv = localStorage.getItem(activeEnvironmentKey);
+            activeEnvironmentName = (lastActiveEnv && environments[lastActiveEnv]) ? lastActiveEnv : Object.keys(environments)[0];
+            localStorage.setItem(activeEnvironmentKey, activeEnvironmentName);
+
+            notebooks = environments[activeEnvironmentName];
+
+            const lastActiveNotebookId = Number(localStorage.getItem(activeNotebookIdKey));
+            const lastActiveNotebookExists = notebooks.some(nb => nb.id === lastActiveNotebookId);
+            activeNotebookId = (lastActiveNotebookId && lastActiveNotebookExists) ? lastActiveNotebookId : notebooks[0]?.id || null;
+
+            const lastActiveNoteId = Number(localStorage.getItem(activeNoteIdKey));
+            if (activeNotebookId) {
+                const currentNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+                const lastActiveNoteExists = currentNotebook?.notes.some(n => n.id === lastActiveNoteId);
+
+                if (lastActiveNoteExists) {
+                    activeNoteId = lastActiveNoteId;
+                } else {
+                    activeNoteId = currentNotebook?.notes.sort((a, b) => b.id - a.id)[0]?.id || null;
+                }
+            } else {
+                activeNoteId = null;
+            }
+        }
+        
+        function renderAll() {
+            renderEnvironmentsList();
+            renderSidebar();
+            renderNoteList();
+            renderEditor();
+            updateToolbarVisibility(); 
+        }
+
+        function updateToolbarVisibility() {
+            editorToolbar.classList.toggle('visible', activeNoteId !== null);
+        }
+
+        function renderEnvironmentsList() {
+            const environmentsList = document.getElementById('environments-list');
+            environmentsList.innerHTML = '';
+            Object.keys(environments).forEach(name => {
+                const li = document.createElement('li');
+                li.className = 'menu-list-item';
+                if (name === activeEnvironmentName) li.classList.add('active');
+                
+                const initials = name.substring(0, 2).toUpperCase();
+                
+                li.innerHTML = `
+                    <a href="#" data-env-name="${name}" title="${name}">
+                        <span class="initials-placeholder">${initials}</span>
+                    </a>
+                    <button class="rename-notebook-btn" data-env-name-rename="${name}" title="Rename Environment">
+                        <i class="fa-solid fa-pencil"></i>
+                    </button>
+                    <button class="delete-notebook-btn" data-env-name-delete="${name}" title="Delete Environment">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>`;
+                environmentsList.appendChild(li);
+            });
+        }
+
+        function renderSidebar() {
+            notebooksList.innerHTML = '';
+            const iconMap = { 'Getting Started': 'fa-solid fa-lightbulb', 'Ideas & Brainstorming': 'fa-solid fa-seedling', 'Work Projects': 'fa-solid fa-briefcase' };
+            notebooks.forEach(nb => {
+                const li = document.createElement('li');
+                li.className = 'menu-list-item';
+                if (nb.id === activeNotebookId) li.classList.add('active');
+                const initials = nb.name.substring(0, 2).toUpperCase();
+                li.innerHTML = `
+                    <a href="#" data-notebook-id="${nb.id}" title="${nb.name} (${nb.notes.length} notes)">
+                        <i class="${iconMap[nb.name] || 'fa-solid fa-book'}"></i>
+                        <span class="initials-placeholder">${initials}</span>
+                    </a>
+                    <button class="rename-notebook-btn" data-notebook-id-rename="${nb.id}" title="Rename Notebook"><i class="fa-solid fa-pencil"></i></button>
+                    <button class="delete-notebook-btn" data-notebook-id-delete="${nb.id}" title="Delete Notebook"><i class="fa-solid fa-trash-can"></i></button>`;
+                notebooksList.appendChild(li);
+            });
+        }
+
+        function renderNoteList() {
+            const searchTerm = searchInput?.value.toLowerCase().trim() || '';
+            const isFiltering = searchTerm.length > 0;
+            
+            let notesToDisplay = [];
+            if (isFiltering) {
+                notesToDisplay = notebooks.flatMap(nb => nb.notes.map(note => ({...note, notebookId: nb.id, notebookName: nb.name }))).filter(note => note.title.toLowerCase().includes(searchTerm) || (note.content?.toLowerCase().replace(/<[^>]*>/g, '').includes(searchTerm))).sort((a, b) => b.id - a.id);
+            } else {
+                const currentNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+                const allNotesInContext = currentNotebook?.notes.map(note => ({...note, notebookId: activeNotebookId, notebookName: currentNotebook.name})) || [];
+                notesToDisplay = flattenAndOrderNotes(buildHierarchy(allNotesInContext));
+            }
+            
+            listItems.innerHTML = '';
+            const activeNoteStillVisible = notesToDisplay.some(note => note.id === activeNoteId);
+            
+            if (notesToDisplay.length === 0) {
+                 setActiveNote(null);
+            } else if (!activeNoteStillVisible) {
+                setActiveNote(notesToDisplay[0].id);
+            }
+
+            if (notesToDisplay.length === 0) {
+                listItems.innerHTML = `<p class="empty-list-message">${isFiltering ? 'No matches found.' : 'No notes here. Add one!'}</p>`;
+            } 
+
+            notesToDisplay.forEach(note => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'note-card-wrapper';
+                if (isFiltering) {
+                    wrapper.classList.add('search-result');
+                    wrapper.innerHTML = `<div class="notebook-context">${note.notebookName}</div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'note-card';
+                card.dataset.noteId = note.id;
+                card.dataset.notebookId = note.notebookId; 
+                card.dataset.title = note.title; 
+                
+                if (!isFiltering) {
+                    card.dataset.level = note.level;
+                    if (note.hasChildren) {
+                        card.classList.add('parent');
+                        if (expandedParents.has(note.id)) {
+                            card.classList.add('parent-expanded');
+                            const subpageAddWrapper = document.createElement('div');
+                            subpageAddWrapper.className = 'subpage-add-wrapper';
+                            subpageAddWrapper.style.paddingLeft = `${(note.level + 1) * 10 + 10}px`; 
+                            subpageAddWrapper.innerHTML = `<button class="subpage-add-btn" data-parent-id="${note.id}"><i class="fa-solid fa-plus"></i> New Sub-Page</button>`;
+                            wrapper.appendChild(subpageAddWrapper);
+                        }
+                    }
+                }
+                if (note.id === activeNoteId) card.classList.add('active');
+                
+                let innerHTML = `<i class="hierarchy-toggle fa-solid fa-chevron-right" data-toggle-id="${note.id}" style="${isFiltering ? 'opacity:0; pointer-events:none;' : ''}"></i>`;
+                innerHTML += `<span class="note-name-placeholder">${note.title}</span><button class="delete-note-btn" data-note-id-delete="${note.id}" title="Delete Note"><i class="fa-solid fa-trash-can"></i></button>`;
+                card.innerHTML += innerHTML;
+                wrapper.prepend(card); 
+                listItems.appendChild(wrapper);
+            });
+            
+            const currentNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+            listHeader.innerHTML = `${!isFiltering ? `<button id="add-note-btn" class="neumorphic-icon-btn" title="New Page"><i class="fa-solid fa-plus"></i></button>` : ''}`;
+            const addNoteBtn = document.getElementById('add-note-btn');
+            if (addNoteBtn) {
+                addNoteBtn.disabled = !currentNotebook; 
+                addNoteBtn.onclick = () => addNote(false, null);
+            }
+        }
+        
+        function renderEditor() {
+            let currentNote = null;
+            if (activeNoteId !== null) {
+                for (const nb of notebooks) {
+                    const note = nb.notes.find(n => n.id === activeNoteId);
+                    if (note) { currentNote = note; break; }
+                }
+            }
+            
+            if (!currentNote) {
+                activeEditor.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                updateToolbarVisibility(); 
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            activeEditor.classList.remove('hidden');
+            noteTitleInput.value = currentNote.title;
+            noteContentEditor.innerHTML = currentNote.content;
+            
+            if (!searchInput.value.trim()) noteContentEditor.focus();
+            updateToolbarVisibility(); 
+            renderNoteList(); 
+        }
+
+        // --- ENVIRONMENT & NOTEBOOK ACTIONS ---
+        function switchEnvironment(newName) {
+            if (!newName || !environments[newName] || newName === activeEnvironmentName) return;
+            
+            saveCurrentNote(); // Save before switching environments
+            
+            activeEnvironmentName = newName;
+            localStorage.setItem(activeEnvironmentKey, activeEnvironmentName);
+            
+            notebooks = environments[activeEnvironmentName];
+            activeNotebookId = notebooks[0]?.id || null;
+            setActiveNote(null);
+            if (activeNotebookId) {
+                const currentNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+                setActiveNote(currentNotebook?.notes.sort((a,b)=>b.id-a.id)[0]?.id || null);
+            }
+            localStorage.setItem(activeNotebookIdKey, activeNotebookId);
+            showMessage(`Switched to '${newName}' environment.`, "info");
+            renderAll();
+        }
+
+        function showNewEnvironmentModal() {
+            notebookModal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px; text-align: center; background-color: var(--list-bg);">
+                    <h3 style="color: var(--primary-color);">New Environment</h3>
+                    <p style="color: var(--subtle-text); font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;">Create a separate space for your notes.</p>
+                    <form id="environment-form">
+                        <input type="text" id="environment-name-input" required placeholder="e.g., Personal, Work..." 
+                            style="width: 100%; padding: 12px; border: none; border-radius: 10px; background-color: var(--bg-color); 
+                            color: var(--text-color); font-size: 1rem; margin-bottom: 25px; 
+                            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);"
+                            autofocus>
+                        <div class="modal-actions" style="justify-content: center;">
+                            <button type="button" class="neumorphic-btn-flat" id="modal-cancel-btn">Cancel</button>
+                            <button type="submit" class="neumorphic-btn-flat primary">Create</button>
+                        </div>
+                    </form>
+                </div>`;
+            notebookModal.classList.add('active');
+            
+            const form = notebookModal.querySelector('#environment-form'), input = notebookModal.querySelector('#environment-name-input');
+            const handleClose = () => notebookModal.classList.remove('active');
+            notebookModal.querySelector('#modal-cancel-btn').addEventListener('click', handleClose);
+            notebookModal.addEventListener('click', e => { if (e.target.matches('.modal-overlay')) handleClose(); });
+
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                const newName = input.value.trim();
+                if (newName && !environments[newName]) {
+                    environments[newName] = [{ id: Date.now(), name: "New Notebook", notes: [] }];
+                    saveData();
+                    switchEnvironment(newName);
+                    showMessage(`Environment '${newName}' created!`, "success");
+                } else if (environments[newName]) {
+                    showMessage(`'${newName}' already exists.`, "error");
+                    return;
+                }
+                handleClose();
+            }, { once: true }); 
+            input.focus();
+        }
+
+        function showRenameEnvironmentModal(currentName) {
+            if (!currentName) return;
+
+            notebookModal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px; text-align: center; background-color: var(--list-bg);">
+                    <h3 style="color: var(--primary-color);">Rename Environment</h3>
+                    <form id="environment-rename-form">
+                        <input type="text" id="environment-rename-input" required value="${currentName}"
+                            style="width: 100%; padding: 12px; border: none; border-radius: 10px; background-color: var(--bg-color); 
+                            color: var(--text-color); font-size: 1rem; margin-bottom: 25px; 
+                            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);"
+                            autofocus>
+                        <div class="modal-actions" style="justify-content: center;">
+                            <button type="button" class="neumorphic-btn-flat" id="modal-cancel-btn">Cancel</button>
+                            <button type="submit" class="neumorphic-btn-flat primary">Rename</button>
+                        </div>
+                    </form>
+                </div>`;
+            notebookModal.classList.add('active');
+            
+            const form = notebookModal.querySelector('#environment-rename-form');
+            const input = notebookModal.querySelector('#environment-rename-input');
+            const handleClose = () => notebookModal.classList.remove('active');
+            
+            notebookModal.querySelector('#modal-cancel-btn').addEventListener('click', handleClose);
+            notebookModal.addEventListener('click', e => { if (e.target.matches('.modal-overlay')) handleClose(); });
+
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                const newName = input.value.trim();
+                if (newName && newName !== currentName) {
+                    if (environments[newName]) {
+                        showMessage(`'${newName}' already exists.`, "error");
+                        return;
+                    }
+                    environments[newName] = environments[currentName];
+                    delete environments[currentName];
+
+                    if (activeEnvironmentName === currentName) {
+                        activeEnvironmentName = newName;
+                        localStorage.setItem(activeEnvironmentKey, activeEnvironmentName);
+                    }
+                    saveData();
+                    showMessage(`Environment renamed to '${newName}'!`, "success");
+                }
+                handleClose();
+                renderAll();
+            }, { once: true }); 
+            input.focus();
+        }
+        
+        function handleEnvironmentDeletion(name) {
+            if (Object.keys(environments).length <= 1) {
+                showMessage("Cannot delete the last environment.", "error");
+                return;
+            }
+            pendingDeleteEnvironmentName = name;
+            const message = `Delete this **Environment** and all its notebooks and notes? This action cannot be undone.`;
+            confirmModalMessage.innerHTML = message;
+            confirmModal.classList.add('active');
+        }
+        
+        function showRenameModal(idToRename = null, isCreate = false) {
+            isRenameMode = !isCreate;
+            const notebook = isRenameMode ? notebooks.find(nb => nb.id === idToRename) : null;
+            if (isRenameMode && !notebook) return;
+
+            notebookModal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px; text-align: center; background-color: var(--list-bg);">
+                    <h3 style="color: var(--primary-color);">${isCreate ? 'Create New Notebook' : 'Rename Notebook'}</h3>
+                    <form id="notebook-form">
+                        <input type="text" id="notebook-name-input" required placeholder="e.g., Ideas & Brainstorming" value="${isCreate ? '' : notebook.name}"
+                            style="width: 100%; padding: 12px; border: none; border-radius: 10px; background-color: var(--bg-color); 
+                            color: var(--text-color); font-size: 1rem; margin-bottom: 25px; 
+                            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);"
+                            autofocus>
+                        <div class="modal-actions" style="justify-content: center;">
+                            <button type="button" class="neumorphic-btn-flat" id="modal-cancel-btn">Cancel</button>
+                            <button type="submit" class="neumorphic-btn-flat primary">${isCreate ? 'Create' : 'Rename'}</button>
+                        </div>
+                    </form>
+                </div>`;
+            notebookModal.classList.add('active');
+            
+            const form = notebookModal.querySelector('#notebook-form'), input = notebookModal.querySelector('#notebook-name-input');
+            const handleClose = () => { notebookModal.classList.remove('active'); isRenameMode = false; };
+            notebookModal.querySelector('#modal-cancel-btn').addEventListener('click', handleClose);
+            notebookModal.addEventListener('click', e => { if (e.target.matches('.modal-overlay')) handleClose(); });
+
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                const newName = input.value.trim();
+                if (newName) {
+                    if (isRenameMode) {
+                        notebook.name = newName;
+                        showMessage("Notebook renamed!", "success");
+                    } else {
+                        const newNotebook = { id: Date.now(), name: newName, notes: [] };
+                        notebooks.push(newNotebook);
+                        activeNotebookId = newNotebook.id;
+                        setActiveNote(null);
+                        localStorage.setItem(activeNotebookIdKey, activeNotebookId);
+                        showMessage("New notebook created!", "success");
+                    }
+                    saveData();
+                }
+                handleClose();
+                renderAll();
+            }, { once: true }); 
+            input.focus();
+        }
+        
+        function addNote(isNewNotebook = false, parentNoteId = null) {
+            const currentNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+            if (!currentNotebook) { showMessage("Please select a notebook first.", "error"); return; }
+            
+            const newNote = { id: Date.now(), title: `Untitled Note ${currentNotebook.notes.length + 1}`, content: "", parentId: parentNoteId };
+            currentNotebook.notes.push(newNote);
+            setActiveNote(newNote.id);
+            saveData();
+            if (parentNoteId !== null) expandedParents.add(parentNoteId);
+            renderAll(); 
+            noteTitleInput.focus();
+            showMessage(`New ${parentNoteId !== null ? 'sub-page' : 'page'} created!`, "success");
+        }
+
+        // --- NEW: More Robust Saving Logic ---
+        function saveCurrentNote() {
+            // If no note is active, or the editor is hidden (e.g., empty state showing), do nothing.
+            if (!activeNoteId || activeEditor.classList.contains('hidden')) {
+                return;
+            }
+
+            let noteToSave = null;
+            // Find the active note across all notebooks in the current environment
+            for (const nb of notebooks) {
+                const note = nb.notes.find(n => n.id === activeNoteId);
+                if (note) {
+                    noteToSave = note;
+                    break;
+                }
+            }
+
+            if (!noteToSave) return; // Note not found, do nothing
+
+            noteToSave.title = noteTitleInput.value;
+            noteToSave.content = noteContentEditor.innerHTML;
+            saveData();
+        }
+
+        const debouncedSave = debounce(saveCurrentNote, 800);
+
+
+        function handleDeletion(id, type) {
+            pendingDeleteNotebookId = (type === 'notebook') ? id : null;
+            pendingDeleteNoteId = (type === 'note') ? id : null;
+            const message = type === 'notebook' 
+                ? `Delete this **Notebook** and all ${notebooks.find(nb => nb.id === id)?.notes.length || 0} notes inside? This cannot be undone.`
+                : `Delete this note and all its sub-pages? This cannot be undone.`;
+            confirmModalMessage.innerHTML = message;
+            confirmModal.classList.add('active');
+        }
+        
+        function collectDescendants(noteId, notesMap, notesToDelete = new Set()) {
+            notesToDelete.add(noteId);
+            const noteWithChildren = notesMap.get(noteId);
+            if (noteWithChildren) noteWithChildren.children.forEach(child => collectDescendants(child.id, notesMap, notesToDelete));
+            return notesToDelete;
+        }
+
+        function performDeletion() {
+            if (pendingDeleteEnvironmentName !== null) {
+                const nameToDelete = pendingDeleteEnvironmentName;
+                
+                delete environments[nameToDelete];
+
+                if (activeEnvironmentName === nameToDelete) {
+                    activeEnvironmentName = Object.keys(environments)[0];
+                    localStorage.setItem(activeEnvironmentKey, activeEnvironmentName);
+                    notebooks = environments[activeEnvironmentName];
+                    activeNotebookId = notebooks[0]?.id || null;
+                    setActiveNote(null);
+                    if (activeNotebookId) {
+                        const currentNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+                        setActiveNote(currentNotebook?.notes.sort((a,b)=>b.id-a.id)[0]?.id || null);
+                    }
+                    localStorage.setItem(activeNotebookIdKey, activeNotebookId);
+                }
+                
+                pendingDeleteEnvironmentName = null;
+                showMessage("Environment deleted.", "success");
+            
+            } else if (pendingDeleteNotebookId !== null) {
+                const idToDelete = pendingDeleteNotebookId;
+                notebooks = notebooks.filter(nb => nb.id !== idToDelete);
+                if (notebooks.length === 0) {
+                    const fallbackNotebook = { id: Date.now(), name: "Getting Started", notes: [] };
+                    notebooks.push(fallbackNotebook);
+                }
+                if (activeNotebookId === idToDelete) activeNotebookId = notebooks[0]?.id || null; 
+                const newNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+                setActiveNote(newNotebook?.notes.sort((a,b)=>b.id-a.id)[0]?.id || null);
+                showMessage("Notebook deleted.", "success");
+                localStorage.setItem(activeNotebookIdKey, activeNotebookId);
+                pendingDeleteNotebookId = null;
+            } else if (pendingDeleteNoteId !== null) {
+                const idToDelete = pendingDeleteNoteId;
+                let foundNotebook = notebooks.find(nb => nb.notes.some(note => note.id === idToDelete));
+                if (foundNotebook) {
+                    const notesMap = new Map();
+                    const allNotesCopy = foundNotebook.notes.map(note => ({ ...note, children: [] }));
+                    allNotesCopy.forEach(note => notesMap.set(note.id, note));
+                    allNotesCopy.forEach(note => { if (note.parentId !== null && notesMap.has(note.parentId)) notesMap.get(note.parentId).children.push(note); });
+                    const idsToDelete = collectDescendants(idToDelete, notesMap);
+                    foundNotebook.notes = foundNotebook.notes.filter(note => !idsToDelete.has(note.id));
+                    if (idsToDelete.has(activeNoteId)) {
+                        setActiveNote(foundNotebook.notes.sort((a, b) => b.id - a.id)[0]?.id || null);
+                    }
+                }
+                pendingDeleteNoteId = null;
+                showMessage("Note(s) deleted.", "success");
+            } else { return; }
+            confirmModal.classList.remove('active');
+            saveData();
+            renderAll();
+        }
+        
+        // --- EVENT LISTENERS ---
+        themeToggleBtn.addEventListener('click', toggleTheme);
+        saveBackupBtn.addEventListener('click', saveToFile);
+        loadFileInput.addEventListener('change', loadFromFile);
+        
+        window.addEventListener('beforeunload', saveCurrentNote);
+        
+        if (fullscreenToggleBtn) {
+            fullscreenToggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('fullscreen-mode');
+                const icon = fullscreenToggleBtn.querySelector('i');
+                if (document.body.classList.contains('fullscreen-mode')) {
+                    icon.classList.remove('fa-expand');
+                    icon.classList.add('fa-compress');
+                    fullscreenToggleBtn.title = "Exit Fullscreen";
+                } else {
+                    icon.classList.remove('fa-compress');
+                    icon.classList.add('fa-expand');
+                    fullscreenToggleBtn.title = "Toggle Fullscreen";
+                }
+            });
+        }
+
+        addEnvironmentBtn.addEventListener('click', showNewEnvironmentModal);
+
+        utilityPanel.addEventListener('click', e => {
+            const renameBtn = e.target.closest('.rename-notebook-btn[data-env-name-rename]');
+            if (renameBtn) {
+                const envName = renameBtn.dataset.envNameRename;
+                showRenameEnvironmentModal(envName);
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+
+            const deleteBtn = e.target.closest('.delete-notebook-btn[data-env-name-delete]');
+            if (deleteBtn) {
+                const envName = deleteBtn.dataset.envNameDelete;
+                handleEnvironmentDeletion(envName);
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+
+            const link = e.target.closest('a[data-env-name]');
+            if (link) {
+                e.preventDefault();
+                e.stopPropagation();
+                const envName = link.dataset.envName;
+                switchEnvironment(envName);
+            }
+        });
+
+
+        searchInput.addEventListener('input', debounce(renderAll, 300));
+        
+        confirmModalCancel.addEventListener('click', () => {
+            confirmModal.classList.remove('active');
+            pendingDeleteNoteId = null;
+            pendingDeleteNotebookId = null;
+            pendingDeleteEnvironmentName = null;
+        });
+
+        confirmModal.addEventListener('click', e => { 
+            if (e.target.matches('.modal-overlay')) {
+                confirmModal.classList.remove('active');
+                pendingDeleteNoteId = null;
+                pendingDeleteNotebookId = null;
+                pendingDeleteEnvironmentName = null;
+            }
+        });
+
+        confirmModalOk.addEventListener('click', performDeletion);
+        addNotebookBtn.addEventListener('click', () => showRenameModal(null, true));
+
+        sidebar.addEventListener('click', e => {
+            const deleteBtn = e.target.closest('.delete-notebook-btn');
+            if (deleteBtn) { handleDeletion(Number(deleteBtn.dataset.notebookIdDelete), 'notebook'); e.preventDefault(); e.stopPropagation(); return; }
+            
+            const renameBtn = e.target.closest('.rename-notebook-btn');
+            if (renameBtn) { showRenameModal(Number(renameBtn.dataset.notebookIdRename), false); e.preventDefault(); e.stopPropagation(); return; }
+            
+            const link = e.target.closest('a[data-notebook-id]');
+            if (link) {
+                e.preventDefault();
+                const nbId = Number(link.dataset.notebookId);
+                if (searchInput.value.trim().length > 0) searchInput.value = ''; 
+                if(activeNotebookId === nbId) { renderAll(); return; }
+                
+                saveCurrentNote(); 
+                
+                activeNotebookId = nbId;
+                localStorage.setItem(activeNotebookIdKey, activeNotebookId);
+                const currentNotebook = notebooks.find(nb => nb.id === activeNotebookId);
+                setActiveNote(currentNotebook?.notes.sort((a,b)=>b.id-a.id)[0]?.id || null);
+                expandedParents.clear(); 
+                renderAll();
+            }
+        });
+
+        listItems.addEventListener('click', e => {
+            const subpageBtn = e.target.closest('.subpage-add-btn[data-parent-id]');
+            if (subpageBtn) { addNote(false, Number(subpageBtn.dataset.parentId)); e.stopPropagation(); return; }
+            
+            const toggleBtn = e.target.closest('.hierarchy-toggle[data-toggle-id]');
+            if (toggleBtn) {
+                const parentId = Number(toggleBtn.dataset.toggleId);
+                if (expandedParents.has(parentId)) expandedParents.delete(parentId);
+                else expandedParents.add(parentId);
+                renderNoteList(); 
+                e.stopPropagation();
+                return;
+            }
+            
+            const deleteBtn = e.target.closest('.delete-note-btn');
+            if (deleteBtn) { handleDeletion(Number(deleteBtn.dataset.noteIdDelete), 'note'); e.stopPropagation(); return; }
+            
+            const noteCard = e.target.closest('.note-card');
+            if (noteCard) {
+                const noteId = Number(noteCard.dataset.noteId);
+                if (activeNoteId !== noteId) {
+                    saveCurrentNote(); 
+                    setActiveNote(noteId);
+                    renderAll();
+                }
+            }
+        });
+        
+        noteTitleInput.addEventListener('input', debouncedSave);
+        noteContentEditor.addEventListener('input', debouncedSave);
+
+
+        let imageResizeState = {
+            resizing: false,
+            wrapper: null,
+            startX: 0,
+            startWidth: 0,
+        };
+
+        function removeImageWrapper(force = false) {
+            if (imageResizeState.resizing && !force) return; 
+            const existingWrapper = noteContentEditor.querySelector('.image-wrapper');
+            if (existingWrapper) {
+                const img = existingWrapper.querySelector('img');
+                if (img) {
+                    img.style.width = existingWrapper.style.width;
+                    img.style.height = 'auto';
+                    existingWrapper.parentNode.insertBefore(img, existingWrapper);
+                }
+                existingWrapper.parentNode.removeChild(existingWrapper);
+                saveCurrentNote(); 
+            }
+        }
+        
+        // Global click listener to hide toolbars
+        document.addEventListener('click', (e) => {
+            if (!noteContentEditor.contains(e.target) && !tableToolbar.contains(e.target) && !e.target.closest('[data-command="manageTable"]')) {
+                tableToolbar.classList.remove('active');
+                currentTableContext = null;
+            }
+        });
+
+        noteContentEditor.addEventListener('click', (e) => {
+            const target = e.target;
+            
+            const deleteBtn = e.target.closest('.delete-code-btn');
+            if (deleteBtn) {
+                const wrapper = deleteBtn.closest('.code-block-wrapper');
+                if (wrapper) {
+                    const nextEl = wrapper.nextElementSibling;
+                    if (nextEl && nextEl.tagName === 'P' && (nextEl.innerHTML === '<br>' || nextEl.innerHTML === '')) {
+                        nextEl.remove();
+                    }
+                    wrapper.remove();
+                    showMessage("Code block deleted.", "info");
+                    saveCurrentNote();
+                }
+                return;
+            }
+
+            const copyBtn = e.target.closest('.copy-code-btn');
+            if (copyBtn) {
+                const wrapper = copyBtn.closest('.code-block-wrapper');
+                const codeElement = wrapper.querySelector('pre.code-block');
+                if (codeElement) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = codeElement.innerText;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showMessage("Code copied to clipboard!", "success");
+                    } catch (err) {
+                        showMessage("Failed to copy code.", "error");
+                    }
+                    document.body.removeChild(textarea);
+                }
+                return; 
+            }
+
+            if (!target.closest('.image-wrapper') && target.tagName !== 'IMG') {
+                removeImageWrapper(true);
+            }
+
+            if (target.tagName === 'IMG' && !target.closest('.image-wrapper')) {
+                removeImageWrapper(true);
+
+                const img = target;
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('image-wrapper', 'active');
+                
+                wrapper.style.width = img.style.width || `${img.offsetWidth}px`;
+                wrapper.style.height = 'auto';
+
+                img.parentNode.insertBefore(wrapper, img);
+                wrapper.appendChild(img);
+
+                img.style.width = '100%';
+                img.style.height = 'auto';
+
+                const handle = document.createElement('div');
+                handle.classList.add('resize-handle', 'br');
+                wrapper.appendChild(handle);
+
+                handle.addEventListener('mousedown', initResize);
+            }
+            
+            updateTableToolbar(e.target);
+        });
+        
+        noteContentEditor.addEventListener('keyup', (e) => updateTableToolbar(e.target));
+
+        function initResize(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const wrapper = e.target.closest('.image-wrapper');
+            if (!wrapper) return;
+            
+            imageResizeState = {
+                resizing: true,
+                wrapper: wrapper,
+                startX: e.clientX,
+                startWidth: parseInt(document.defaultView.getComputedStyle(wrapper).width, 10),
+            };
+            
+            document.addEventListener('mousemove', resizeImage);
+            document.addEventListener('mouseup', stopResize);
+        }
+
+        function resizeImage(e) {
+            if (!imageResizeState.resizing) return;
+            
+            const dx = e.clientX - imageResizeState.startX;
+            const newWidth = imageResizeState.startWidth + dx;
+            
+            if (newWidth > 50) { // minimum width
+                 imageResizeState.wrapper.style.width = `${newWidth}px`;
+            }
+        }
+
+        function stopResize() {
+            if (!imageResizeState.resizing) return;
+            
+            imageResizeState.resizing = false;
+            document.removeEventListener('mousemove', resizeImage);
+            document.removeEventListener('mouseup', stopResize);
+
+            saveCurrentNote();
+        }
+        
+        function showInsertTableModal() {
+            tableModal.classList.add('active');
+            const rowsInput = document.getElementById('table-rows-input');
+            const colsInput = document.getElementById('table-cols-input');
+            const form = document.getElementById('table-form');
+            const cancelBtn = document.getElementById('table-modal-cancel');
+
+            rowsInput.focus();
+            rowsInput.select();
+
+            const handleClose = () => tableModal.classList.remove('active');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const rows = parseInt(rowsInput.value, 10);
+                const cols = parseInt(colsInput.value, 10);
+
+                if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) {
+                    showMessage('Please enter valid numbers for rows and columns.', 'error');
+                    return;
+                }
+                
+                if (rows === 0) {
+                     showMessage('Table must have at least one row.', 'error');
+                     return;
+                }
+
+                let tableHTML = '<br><table style="width:100%; border-collapse: collapse;"><thead><tr>';
+                for (let i = 0; i < cols; i++) {
+                    tableHTML += `<th>Header ${i + 1}</th>`;
+                }
+                tableHTML += '</tr></thead><tbody>';
+                
+                for (let i = 0; i < rows - 1; i++) {
+                    tableHTML += '<tr>';
+                    for (let j = 0; j < cols; j++) {
+                        tableHTML += '<td>&nbsp;</td>';
+                    }
+                    tableHTML += '</tr>';
+                }
+                tableHTML += '</tbody></table><br>';
+                
+                noteContentEditor.focus();
+                document.execCommand('insertHTML', false, tableHTML);
+                
+                handleClose();
+                debouncedSave();
+            };
+            
+            form.onsubmit = handleSubmit;
+            cancelBtn.onclick = handleClose;
+            tableModal.onclick = (e) => {
+                if(e.target === tableModal) handleClose();
+            };
+        }
+
+        // --- Table Toolbar Logic ---
+        function updateTableToolbar(clickedElement) {
+            const getTableContextFromSelection = () => {
+                const selection = window.getSelection();
+                if (!selection || selection.rangeCount === 0) return null;
+                const node = selection.getRangeAt(0).startContainer;
+                const table = node.nodeType === 1 ? node.closest('table') : node.parentElement.closest('table');
+                return table;
+            };
+
+            let table = getTableContextFromSelection();
+            if (clickedElement && !table) {
+                table = clickedElement.closest('table');
+            }
+            
+            if (table) {
+                lastClickedTable = table;
+                const row = clickedElement ? clickedElement.closest('tr') : table.querySelector('tr');
+                const cell = clickedElement ? clickedElement.closest('td, th') : table.querySelector('td, th');
+                currentTableContext = { table, row, cell };
+
+                const tableRect = table.getBoundingClientRect();
+                const editorBody = table.closest('.editor-body');
+                if (!editorBody) return;
+
+                const editorBodyRect = editorBody.getBoundingClientRect();
+                
+                let top = (tableRect.top - editorBodyRect.top) + editorBody.scrollTop - tableToolbar.offsetHeight - 5;
+                let left = (tableRect.left - editorBodyRect.left) + editorBody.scrollLeft;
+
+                if (top < editorBody.scrollTop) {
+                    top = editorBody.scrollTop;
+                }
+
+                tableToolbar.style.top = `${top}px`;
+                tableToolbar.style.left = `${left}px`;
+                tableToolbar.classList.add('active');
+            } else {
+                if (!tableToolbar.contains(document.activeElement) && !document.querySelector('[data-command="manageTable"]:hover')) {
+                    tableToolbar.classList.remove('active');
+                    currentTableContext = null;
+                }
+            }
+        }
+        
+        tableToolbar.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Prevent editor from losing focus
+        });
+
+        tableToolbar.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-command]');
+            if (!btn || !currentTableContext) return;
+            
+            const { table, row, cell } = currentTableContext;
+            const command = btn.dataset.command;
+
+            switch (command) {
+                case 'delete-table':
+                    table.remove();
+                    break;
+                case 'add-row-above':
+                case 'add-row-below':
+                    if (row) {
+                        const newRow = table.insertRow(command === 'add-row-above' ? row.rowIndex : row.rowIndex + 1);
+                        for (let i = 0; i < row.cells.length; i++) {
+                            const newCell = newRow.insertCell();
+                            newCell.innerHTML = '&nbsp;';
+                        }
+                    }
+                    break;
+                case 'delete-row':
+                    if (row && table.rows.length > 1) {
+                        table.deleteRow(row.rowIndex);
+                    } else if (table.rows.length <= 1) {
+                        table.remove();
+                    }
+                    break;
+                case 'add-col-left':
+                case 'add-col-right':
+                    if (cell) {
+                        const cellIndex = cell.cellIndex;
+                        for (let i = 0; i < table.rows.length; i++) {
+                            const currentRow = table.rows[i];
+                            const isHeaderRow = currentRow.parentElement.tagName === 'THEAD';
+                            const newCell = isHeaderRow ? document.createElement('th') : document.createElement('td');
+                            newCell.innerHTML = isHeaderRow ? `Header` : '&nbsp;';
+                            
+                            const targetIndex = command === 'add-col-left' ? cellIndex : cellIndex + 1;
+                            if (targetIndex >= currentRow.cells.length) {
+                                currentRow.appendChild(newCell);
+                            } else {
+                                currentRow.insertBefore(newCell, currentRow.cells[targetIndex]);
+                            }
+                        }
+                    }
+                    break;
+                case 'delete-col':
+                     if (cell && row.cells.length > 1) {
+                        const cellIndex = cell.cellIndex;
+                        for (let i = 0; i < table.rows.length; i++) {
+                            table.rows[i].deleteCell(cellIndex);
+                        }
+                    } else if (row && row.cells.length <= 1) {
+                        table.remove();
+                    }
+                    break;
+            }
+
+            if(command === 'delete-table' || (command === 'delete-row' && table.rows.length <=1) || (command === 'delete-col' && row.cells.length <=1) ){
+                 tableToolbar.classList.remove('active');
+                 lastClickedTable = null;
+                 currentTableContext = null;
+            } else {
+                setTimeout(() => updateTableToolbar(cell || row || table), 50);
+            }
+            saveCurrentNote();
+        });
+
+
+        editorToolbar.addEventListener('mousedown', (e) => {
+             const btn = e.target.closest('button[data-command]');
+             if(btn && btn.dataset.command === 'manageTable'){
+                e.preventDefault();
+             }
+        });
+
+        editorToolbar.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-command]');
+            if (btn) {
+                const command = btn.dataset.command;
+
+                if (command !== 'manageTable') {
+                    noteContentEditor.focus();
+                }
+
+                if (command === 'insertTable') {
+                    showInsertTableModal();
+                } else if (command === 'manageTable') {
+                    if (lastClickedTable) {
+                        updateTableToolbar(lastClickedTable);
+                    } else {
+                        showMessage("Please click inside a table first to manage it.", "info");
+                    }
+                } else if (command === 'insertCodeBlock') {
+                     const isInTableCell = () => {
+                        const selection = window.getSelection();
+                        if (!selection || selection.rangeCount === 0) return false;
+                        let node = selection.getRangeAt(0).startContainer;
+                        while (node && node !== noteContentEditor) {
+                            if (node.nodeName === 'TD' || node.nodeName === 'TH') {
+                                return true;
+                            }
+                            node = node.parentNode;
+                        }
+                        return false;
+                    };
+
+                    const codeBlockHTML = `
+                        <div class="code-block-wrapper" contenteditable="false">
+                            <button class="copy-code-btn" title="Copy Code"><i class="fa-solid fa-copy"></i></button>
+                            <button class="delete-code-btn" title="Delete Block"><i class="fa-solid fa-trash-can"></i></button>
+                            <pre class="code-block" contenteditable="true"><code>// Your code here...</code></pre>
+                        </div>
+                        ${isInTableCell() ? '' : '<p><br></p>'}`;
+                    document.execCommand('insertHTML', false, codeBlockHTML);
+                } else {
+                    document.execCommand(command, false, null);
+                }
+                
+                debouncedSave();
+            }
+        });
+        
+        noteContentEditor.addEventListener('paste', (e) => {
+            e.preventDefault();
+            
+            let pastedHtml = e.clipboardData.getData('text/html');
+            let pastedText = e.clipboardData.getData('text/plain');
+            let htmlToInsert = '';
+
+            // Prioritize HTML content if available, as it preserves formatting
+            if (pastedHtml && pastedHtml.length > 0) {
+                // Basic sanitization could be added here if needed
+                htmlToInsert = pastedHtml;
+            } 
+            // Fallback to plain text
+            else if (pastedText && pastedText.length > 0) {
+                // Convert plain text newlines to <br> tags to preserve paragraphs
+                htmlToInsert = pastedText.replace(/\r\n|\r|\n/g, '<br>');
+            } 
+            // If no text, check for images
+            else {
+                for (let i = 0; i < e.clipboardData.items.length; i++) {
+                    const item = e.clipboardData.items[i];
+                    if (item.type.indexOf('image') !== -1) {
+                        const blob = item.getAsFile();
+                        if (blob) {
+                            const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
+                            if (blob.size > MAX_IMAGE_SIZE) {
+                                showMessage("Pasted image is too large (Max 1MB).", "error");
+                                return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                const imgHtml = `<img src="${event.target.result}" alt="Pasted Image" style="max-width: 100%; height: auto;" />`;
+                                document.execCommand('insertHTML', false, imgHtml);
+                                saveCurrentNote();
+                                showMessage("Image pasted successfully!", "success", 1500);
+                            };
+                            reader.readAsDataURL(blob);
+                        }
+                        return; // Stop after handling the first image
+                    }
+                }
+            }
+
+            if (htmlToInsert) {
+                document.execCommand('insertHTML', false, htmlToInsert);
+                debouncedSave();
+            }
+        });
+        
+        // --- INITIALIZATION ---
+        function init() {
+            const savedTheme = localStorage.getItem(themeKey) || 'light';
+            document.body.classList.toggle('dark-mode', savedTheme === 'dark');
+            if (themeToggleBtn) themeToggleBtn.innerHTML = savedTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            loadData();
+            renderAll();
+        }
+
+        init();
+        
+        // Signal dashboard that this page is ready
+        if (window.parent !== window) {
+            window.parent.postMessage({ action: 'pageReady', file: 'notes.html' }, '*');
+        }
+    });
+    </script>
+</body>
+</html>

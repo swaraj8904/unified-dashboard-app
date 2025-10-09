@@ -1,0 +1,2621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Knowledge Base Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- NEW: Markdown to HTML conversion library -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style>
+        /* Base Colors matching Zenith List theme for consistency */
+        :root {
+            --bg-color: #f0f3f9;
+            --card-bg: #e9ecf4;
+            --text-color: #556070;
+            --subtle-text: #6b778d;
+            --border-color: #d1d9e6;
+            --shadow-light: #ffffff;
+            --shadow-dark: #b1c1d8;
+            --primary-color: #4A90E2;
+            --primary-light: #e9f2fc;
+            --danger-color: #FF6B6B;
+            --success-color: #7ED321;
+            
+            /* CODE STYLES (MODIFIED for a modern, subtle look) */
+            --code-bg: #f5f7fa; /* Light, modern off-white/grey */
+            --code-text: #364152; /* Dark, readable text */
+            --info-bg: #f0f8ff;
+            --info-text: #1e88e5;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-color: #1a202c;
+            --card-bg: #2d3748;
+            --text-color: #edf2f7;
+            --subtle-text: #a0aec0;
+            --border-color: #4a5568;
+            --shadow-light: #444c5d;
+            --shadow-dark: #12161f;
+            --primary-color: #63b3ed;
+            --primary-light: #2c5282;
+            --danger-color: #ff8b8b;
+            
+            /* CODE STYLES (MODIFIED for a modern, subtle look) */
+            --code-bg: #222b3b; /* Dark, subtle background */
+            --code-text: #dbe4ed; /* Light, readable text */
+            --info-bg: #1c2536;
+            --info-text: #63b3ed;
+        }
+
+        /* Applying global styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* Main Header Styles */
+        .app-header {
+            display: grid; 
+            /* MODIFIED GRID: Title (auto) | Search (fixed/max width) | Actions (auto) */
+            grid-template-columns: auto 1fr auto; 
+            gap: 20px; 
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 12px 20px; 
+            border-radius: 16px;
+            /* MODIFIED: Removed background-color and box-shadow for a flat, seamless look */
+            background-color: transparent; 
+            box-shadow: none;
+            flex-shrink: 0;
+        }
+        
+        /* Responsive adjustments for the header */
+        @media (max-width: 768px) {
+            .app-header {
+                grid-template-columns: 1fr; /* Stack on smaller screens */
+                grid-template-rows: auto auto auto;
+                gap: 15px;
+            }
+            .app-header h1 {
+                text-align: center;
+            }
+            /* Change search container to take up more width on mobile, but still centered */
+            .search-container {
+                max-width: 400px; /* Adjusted max width for mobile */
+                width: 90%; 
+                margin: 0 auto; 
+            }
+            .app-header {
+                 /* Restore auto column for mobile stacking */
+                 grid-template-columns: 1fr; 
+            }
+            .header-actions {
+                justify-content: center; /* Center buttons when stacked */
+            }
+        }
+        
+        .app-header h1 {
+            font-size: 2.5rem; 
+            font-weight: 700;
+            color: var(--text-color); 
+            text-shadow: -1px -1px 2px var(--shadow-light), 1px 1px 2px var(--shadow-dark); 
+            white-space: nowrap; 
+            min-width: 200px;
+        }
+        
+        /* Neumorphic Icon Button (Base style for all compact, circular controls) */
+        .neumorphic-icon-btn {
+            background-color: var(--card-bg);
+            border: none;
+            cursor: pointer; 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); 
+        }
+        
+        /* Individual icon styling */
+        .neumorphic-icon-btn i {
+            font-size: 1.2rem; 
+            color: #4d5766; 
+        }
+        
+        /* Dark mode back button color fix */
+        body.dark-mode .neumorphic-icon-btn i {
+            color: var(--text-color); 
+        }
+        
+        .neumorphic-icon-btn:hover {
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .neumorphic-icon-btn:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(2px) scale(0.98);
+        }
+
+        /* Search Bar Wrapper (for holding the icon and input field) */
+        .search-container {
+            position: relative;
+            height: 40px; 
+            /* CENTER SEARCH BAR WITHIN ITS COLUMN */
+            justify-self: center; 
+            width: 100%; 
+            /* NEW: Added Max Width constraint for smaller size */
+            max-width: 300px;
+        }
+        
+        /* Search Bar Styling (Pressed-in look, now square with rounded corners) */
+        #search-input {
+            width: 100%;
+            /* Adjusted padding for taller bar and bigger icon */
+            padding: 5px 15px 5px 45px; 
+            margin: 0; 
+            border: none;
+            /* MODIFIED: Reduced border-radius for squarer look */
+            border-radius: 12px; 
+            /* Using card-bg for a smoother neumorphic look against header background */
+            background-color: var(--card-bg); 
+            color: var(--text-color);
+            font-size: 1rem; 
+            transition: box-shadow 0.2s;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            
+            height: 40px; 
+        }
+        #search-input:focus {
+            outline: none; 
+            /* MODIFIED: Added a distinct blue border */
+            box-shadow: 
+                inset 0 0 0 2px var(--primary-color), /* Blue border */
+                inset 4px 4px 8px var(--shadow-dark), 
+                inset -4px -4px 8px var(--shadow-light);
+        }
+        
+        /* Embedded Search Icon */
+        .search-icon {
+            position: absolute;
+            left: 15px; /* Adjusted position */
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--subtle-text);
+            pointer-events: none; 
+        }
+        
+        /* Action buttons container */
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        /* Content Viewer Area */
+        #main-content {
+            flex-grow: 1;
+            padding: 0 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- Card Layout for Folders (Using Masonry-like Column Layout) --- */
+        #folder-card-grid {
+            /* Adopting the column layout logic from links.html for variable height cards */
+            column-count: auto;
+            column-width: 300px; /* Adjusted column width */
+            column-gap: 25px;
+            padding: 20px 0;
+            margin: 0 auto; /* Center the columns */
+            max-width: 1400px; /* Optional: limit width */
+        }
+
+        .folder-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+            transition: all 0.2s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            /* CRITICAL: Prevents card from breaking across columns (Masonry effect) */
+            break-inside: avoid; 
+            margin-bottom: 25px; /* Add vertical spacing between cards */
+            width: 100%; /* Ensure card takes full width of the column */
+        }
+        
+        .folder-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+        }
+
+        .card-header {
+            background-color: var(--card-bg); 
+            color: var(--text-color);
+            padding: 16px; 
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: none; 
+        }
+        
+        /* Small icon button for controls inside the card header */
+        .card-header .icon-btn {
+            background-color: var(--card-bg); 
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+            color: var(--subtle-text);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        /* Document Link Styles within the Card - Compact and Pressed-In */
+        .document-list {
+            padding: 5px 15px 15px 15px; 
+            overflow-y: auto;
+            /* REVERTED to original height */
+            max-height: 300px; 
+            flex-grow: 1;
+            background-color: var(--card-bg); 
+        }
+
+        .doc-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px; 
+            margin-bottom: 10px;
+            border-radius: 12px; 
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-color);
+            background-color: var(--bg-color); 
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); 
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .doc-link:hover {
+            color: var(--primary-color);
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); 
+        }
+        .doc-link:active {
+            box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+            transform: translateY(1px);
+        }
+
+        .doc-link i {
+            margin-right: 12px;
+            font-size: 1.1rem;
+            color: var(--subtle-text);
+        }
+        .doc-link .doc-name {
+             white-space: nowrap;
+             overflow: hidden;
+             text-overflow: ellipsis;
+             flex-grow: 1;
+        }
+
+        /* --- Iframe Document View --- */
+        #document-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+            /* NEW: Add padding when in fullscreen to keep controls visible */
+            padding: 0 20px; 
+            flex-wrap: wrap; /* Allow wrapping on mobile */
+            gap: 10px;
+        }
+        
+        /* --- DOCUMENT SEARCH INPUT STYLING (NEW) --- */
+        #doc-search-input {
+            /* Inherit the neumorphic look from the main search bar */
+            width: 100%;
+            padding: 5px 15px 5px 35px; /* Adjusted left padding for smaller icon */
+            margin: 0; 
+            border: none;
+            border-radius: 12px; 
+            background-color: var(--card-bg); 
+            color: var(--text-color);
+            font-size: 0.95rem; 
+            transition: box-shadow 0.2s;
+            /* CRITICAL: Pressed-in shadow */
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            height: 36px; 
+        }
+
+        #doc-search-input:focus {
+            outline: none; 
+            box-shadow: 
+                inset 0 0 0 2px var(--primary-color), /* Blue border */
+                inset 4px 4px 8px var(--shadow-dark), 
+                inset -4px -4px 8px var(--shadow-light);
+        }
+
+        #document-search-bar .search-icon {
+            /* Position icon inside the document search input */
+            left: 10px;
+            font-size: 0.9rem;
+        }
+
+        #document-container {
+            width: 100%;
+            /* Adjusted height to account for the new control bar */
+            height: calc(100vh - 170px - 55px); 
+            position: relative;
+            padding-bottom: 0; 
+        }
+        #document-frame {
+            border: none;
+            width: 100%;
+            height: 100%;
+            /* MODIFIED: Default background set to card-bg for Notion files, but this gets overwritten for PDF */
+            background-color: var(--card-bg); 
+            border-radius: 16px;
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+            /* NEW: Apply a scale transform to the iframe content */
+            transform-origin: top left;
+            transition: transform 0.3s ease-out;
+        }
+        
+        /* Styles for when the document is in full screen mode */
+        body.full-screen #main-content {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            padding: 0;
+            z-index: 999;
+            background-color: var(--bg-color);
+            /* NEW: Add space for controls bar */
+            padding-top: 75px; 
+        }
+
+        body.full-screen .app-header {
+            display: none !important;
+        }
+        
+        /* FIX: Ensure document controls are visible and fixed in fullscreen mode */
+        body.full-screen #document-controls { 
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            z-index: 1000; 
+            margin-bottom: 0;
+            padding: 0 20px; /* Use the existing padding */
+            display: flex; /* Override the display: none */
+            background-color: transparent; /* No background needed */
+        }
+        
+        body.full-screen #document-container {
+             /* Adjust height calculation for controls in fullscreen mode */
+             height: calc(100vh - 75px);
+        }
+
+        body.full-screen #document-frame {
+             border-radius: 0;
+             box-shadow: none;
+        }
+
+
+        /* CRITICAL FIX: Back Button Styling for TOP BAR (Matches .neumorphic-icon-btn size) */
+        .document-back-btn {
+            /* Now explicitly inheriting or recreating the full neumorphic style */
+            background-color: var(--card-bg);
+            border: none;
+            cursor: pointer; 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); /* ADDED 3D SHADOW */
+
+            /* Overrides for positioning on top of document view */
+            position: relative; 
+            text-decoration: none; 
+        }
+
+        .document-back-btn:hover { /* ADDED HOVER STATE */
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .document-back-btn:active { /* ADDED ACTIVE/PRESSED STATE */
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(2px) scale(0.98);
+        }
+        
+        .document-back-btn i { 
+            /* Icon size inherited from .neumorphic-icon-btn i (1.4rem) */
+            font-size: 1.2rem; /* Ensure size matches other icons */
+            margin: 0; 
+            color: #4d5766; /* Match default icon color */
+            text-shadow: none; /* Removed unnecessary text shadow */
+            /* MODIFIED: Setting font-weight to extra bold (900) to ensure the arrow renders correctly */
+            font-weight: 900; 
+        }
+        
+        /* Dark mode back button color fix */
+        body.dark-mode .document-back-btn i {
+             color: var(--text-color);
+        }
+
+        .document-back-btn .back-text { display: none; }
+        
+        /* LLM Analysis Styles */
+        /* Removed .analyze-code-btn styles as the buttons are being removed */
+        
+        .analysis-result-container {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 10px;
+            background-color: var(--info-bg);
+            color: var(--info-text);
+            font-size: 0.9rem;
+            border-left: 5px solid var(--primary-color);
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        
+        /* NEW Copy Button Styles (MODIFIED to be a small widget) */
+        .copy-code-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            /* MODIFIED: Reduced size for widget look */
+            width: 32px; 
+            height: 32px; 
+            padding: 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50%; /* Made fully round */
+            cursor: pointer;
+            /* MODIFIED: Theme-matching background/color */
+            background-color: var(--card-bg);
+            color: var(--subtle-text);
+            /* Re-added neumorphic shadow for the button */
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light); 
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center; /* Center content */
+            align-items: center;
+            gap: 0; /* No gap */
+            z-index: 6;
+        }
+        /* Style the icon inside the button */
+        .copy-code-btn i {
+            font-size: 1rem; /* Smaller, cleaner icon */
+            margin: 0;
+            color: inherit;
+        }
+
+        .copy-code-btn:hover {
+            color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+        .copy-code-btn:active {
+            box-shadow: inset 1px 1px 2px var(--shadow-dark), inset -1px -1px 2px var(--shadow-light);
+            transform: translateY(1px);
+        }
+
+        /* Custom scrollbar for better appearance */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--subtle-text);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .hidden { display: none !important; }
+
+        /* FIX: Remove Notion's default bottom border on pre tags */
+        pre {
+            border-bottom: none !important;
+            cursor: copy; /* Indicate it's clickable */
+        }
+        
+        /* FINAL FIX: Aggressively target Notion's outer code block wrapper */
+        div[data-block-type="code"] {
+            border: none !important;
+            padding: 0 !important;
+            position: relative !important; /* CRITICAL FIX */
+        }
+        
+        .notion-code-block {
+            border: none !important;
+        }
+        
+        /* NEW LIGHTBOX/MODAL STYLES */
+        #lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); /* Dark, opaque background */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            cursor: zoom-out; /* Indicate click to close */
+        }
+        #lightbox-overlay.active {
+            display: flex;
+        }
+        #lightbox-image {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* FIX: Ensure native <details> uses the correct visual markers */
+        details {
+            list-style: none; 
+            cursor: pointer;
+            padding-left: 0 !important;
+            margin-bottom: 8px !important;
+        }
+        
+        /* Remove default marker and add custom one */
+        details > summary {
+            list-style: none !important;
+            position: relative;
+            padding-left: 1.5em; /* Space for the arrow */
+        }
+        
+        /* Add custom triangle icon before summary */
+        details summary:before {
+            content: '\f0da'; /* Right arrow icon (fa-caret-right) */
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%) scale(0.8); 
+            color: var(--text-color);
+            transition: transform 0.2s;
+            font-size: 1.1rem;
+        }
+        
+        /* Custom arrow for open state (down-pointing) */
+        details[open] summary:before {
+            content: '\f0d7'; /* Down arrow icon (fa-caret-down) */
+        }
+        
+        /* === NEW CSS FIX: Remove the vertical gray line (list item marker) on <details> === */
+        /* Target CSS being injected into the iframe */
+        #iframe-theme-style body details {
+            border-left: none !important; 
+            padding-left: 0 !important;
+            /* REPLACED with background/hover styling for better delineation */
+            box-shadow: none !important;
+        }
+
+        /* === NEW CSS FIX: Handle the case where Notion's exported HTML adds a list marker style. === */
+        /* This applies to the main document body, which is loaded into the iframe body. */
+        .page .indented ul {
+            list-style-type: none !important; /* Hide list markers */
+            padding-left: 0 !important; /* Remove indentation from list markers */
+        }
+
+        /* === END NEW CSS FIX === */
+        
+        /* === NEW: Styling for Markdown/HTML List Toggles (details/summary) === */
+        
+        /* Visual styling to make it look like a summary area */
+        details {
+            /* The core fix to remove the grey vertical line */
+            border-left: none !important; 
+            padding-left: 0 !important;
+            margin-bottom: 8px;
+            transition: background-color 0.2s;
+            /* Removed box-shadow here to prevent double shading */
+            box-shadow: none; 
+        }
+        
+        /* IMPORTANT: Style the summary to look like a clean toggle bar */
+        details > summary {
+             padding: 8px 10px 8px 1.5em; /* Added vertical padding for height, increased left padding for arrow */
+             font-weight: 600;
+             border-radius: 8px; /* Subtle rounding for the toggle bar */
+             background-color: var(--bg-color); /* Light background to make it stand out against the document body */
+             transition: background-color 0.2s, color 0.2s;
+             box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light); /* Give it a slightly 'pressed' look */
+        }
+
+        details > summary:hover {
+             background-color: var(--primary-light);
+             color: var(--primary-color);
+             box-shadow: inset 1px 1px 3px var(--shadow-dark), inset -1px -1px 3px var(--shadow-light); 
+        }
+
+        /* FIX: Ensure native <details> uses the correct visual markers */
+        details {
+            list-style: none; 
+            cursor: pointer;
+            padding-left: 0 !important;
+            margin-bottom: 8px !important;
+        }
+        
+        /* Remove default marker and add custom one */
+        details > summary {
+            list-style: none !important;
+            position: relative;
+            /* Reset padding/margin of native summary */
+            margin: 0 !important; 
+        }
+        
+        /* Add custom triangle icon before summary */
+        details summary:before {
+            content: '\f0da'; /* Right arrow icon (fa-caret-right) */
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+            position: absolute;
+            left: 8px; /* Adjusted position to be inside the styled summary bar */
+            top: 50%;
+            transform: translateY(-50%) scale(0.8); 
+            color: var(--text-color);
+            transition: transform 0.2s;
+            font-size: 1.1rem;
+        }
+        
+        /* Custom arrow for open state (down-pointing) */
+        details[open] summary:before {
+            content: '\f0d7'; /* Down arrow icon (fa-caret-down) */
+        }
+        
+        /* Apply subtle styling to the content inside the details block for separation */
+        details > :not(summary) {
+            padding: 10px 10px 10px 20px; /* Add internal padding */
+            background-color: var(--card-bg); /* Use card background for inner content */
+            border-radius: 0 0 8px 8px;
+            /* Add a subtle top border to separate content from the summary bar */
+            border-top: 1px solid var(--border-color);
+            margin-top: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Inner Content Styling for Lists and Text (when inside details) --- */
+
+        details > :not(summary) li {
+            /* Match background of the containing box (var(--card-bg)) */
+            background-color: var(--card-bg) !important;
+            /* Add a light inner shadow/border for lists inside the content box */
+            box-shadow: none !important;
+            padding: 4px 8px !important;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        
+        details > :not(summary) p, 
+        details > :not(summary) table, 
+        details > :not(summary) pre {
+             /* Add a little vertical spacing to nested elements */
+             margin: 10px 0 !important; 
+        }
+
+        details > :not(summary) li {
+            /* Add space to the left to align lists nicely inside the box */
+            margin-left: 20px !important; 
+        }
+
+        /* Styling for the purple tag in the image provided */
+        mark.highlight-purple_background {
+            background: rgba(154, 107, 180, 0.15) !important;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* === END NEW LIST TOGGLE STYLES === */
+        
+        /* === Legacy Styles (Kept for completeness but likely overridden) === */
+
+        /* Ensure the clickable header is distinct */
+        div[data-block-type="toggle"] > div:first-child {
+            padding: 4px 0;
+        }
+
+        div[data-block-type="toggle"] > div:first-child:hover {
+             background-color: var(--primary-light);
+        }
+
+        /* Logic to rotate the arrow icon within the Notion block */
+        .toggle-arrow {
+             transition: transform 0.2s;
+        }
+
+        /* Rotate the arrow (down) when open (Notion often uses a 0deg right-pointing character) */
+        .notion-toggle-block-open .toggle-arrow {
+            transform: rotate(90deg) !important;
+        }
+    </style>
+</head>
+<body> <!-- REVERTED: Removed class="dark-mode" HERE -->
+
+    <div class="app-header">
+        <h1>Notion Knowledge Base</h1>
+        
+        <!-- Search bar moved into the header and wrapped for icon -->
+        <div class="search-container" id="main-search-container">
+             <i class="fa-solid fa-magnifying-glass search-icon"></i>
+             <input type="text" id="search-input" placeholder="Search cards and documents..." onkeyup="filterCards()">
+        </div>
+        
+        <div class="header-actions flex gap-4">
+            <!-- MODIFIED: Load button icon is fa-cloud-arrow-up -->
+            <label for="file-input" class="neumorphic-icon-btn" title="Load Notion Export Folder">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+            </label>
+            
+            <input type="file" id="file-input" class="hidden" webkitdirectory directory multiple accept=".html,.pdf,.md">
+            
+            <!-- THEME TOGGLE BUTTON restored to Header -->
+            <button id="theme-toggle" class="neumorphic-icon-btn" title="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </div>
+
+    <main id="main-content">
+        
+        <div id="loading-area" class="text-center p-20" style="color: var(--subtle-text);">
+            <i class="fa-solid fa-book-open text-6xl mb-4"></i>
+            <p class="text-lg">Click **Load Notion Folder** above to begin.</p>
+            <p class="text-sm mt-2">When the dialog appears, please select the top-level folder of your exported Notion files.</p>
+        </div>
+        
+        <div id="folder-view" class="hidden">
+            <!-- Hidden by default, shown when folder is loaded. Content is dynamic. -->
+            <h2 id="root-folder-title" class="text-xl font-bold mb-4 hidden" style="color: var(--text-color);"></h2>
+            <div id="folder-card-grid">
+                <!-- Folder cards go here -->
+            </div>
+        </div>
+
+        <div id="document-view" class="hidden">
+            <div id="document-controls">
+                <!-- Back button is now positioned at the start of the new controls bar -->
+                <a href="#" id="back-to-grid-btn" class="document-back-btn" title="Back to Folders">
+                    <i class="fa-solid fa-arrow-left"></i> <span class="back-text">Back to Folders</span>
+                </a>
+
+                <!-- NEW: Dedicated Document Search Bar (Initially hidden) -->
+                <div id="document-search-bar" class="hidden flex items-center gap-2">
+                    <div class="search-container" style="max-width: 250px; margin: 0; height: 36px;">
+                        <i class="fa-solid fa-magnifying-glass search-icon" style="left: 10px;"></i>
+                        <!-- Applied custom styling directly to the input -->
+                        <input type="text" id="doc-search-input" placeholder="Search in document..." 
+                                style="padding-left: 35px; height: 36px; border-radius: 8px;">
+                    </div>
+                    <!-- Find Previous -->
+                    <button id="doc-search-prev" class="neumorphic-icon-btn" title="Previous Result" style="width: 36px; height: 36px;">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <!-- Find Next -->
+                    <button id="doc-search-next" class="neumorphic-icon-btn" title="Next Result" style="width: 36px; height: 36px;">
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                </div>
+
+                <div class="flex gap-4">
+                    <!-- NEW: Zoom Controls -->
+                    <button id="zoom-out-btn" class="neumorphic-icon-btn" title="Zoom Out">
+                        <i class="fa-solid fa-magnifying-glass-minus"></i>
+                    </button>
+                    <button id="zoom-in-btn" class="neumorphic-icon-btn" title="Zoom In">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    </button>
+                    
+                    <!-- NEW: Full Screen Toggle -->
+                    <button id="fullscreen-toggle-btn" class="neumorphic-icon-btn" title="Toggle Fullscreen">
+                        <i class="fa-solid fa-maximize"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="document-container">
+                <iframe id="document-frame"></iframe>
+            </div>
+        </div>
+    </main>
+    
+    <!-- NEW: Image Lightbox Modal -->
+    <div id="lightbox-overlay" onclick="document.getElementById('lightbox-overlay').classList.remove('active')">
+        <img id="lightbox-image" src="" alt="Zoomed Image">
+    </div>
+
+    <script>
+        // Global state
+        const documentFiles = new Map();
+        const folderView = document.getElementById('folder-view');
+        const documentView = document.getElementById('document-view');
+        const loadingArea = document.getElementById('loading-area');
+        const fileInput = document.getElementById('file-input');
+        const documentFrame = document.getElementById('document-frame');
+        
+        // NEW: Element References
+        const mainSearchContainer = document.getElementById('main-search-container');
+        const docSearchBar = document.getElementById('document-search-bar');
+        
+        // NEW: Document Search state variables
+        let currentDocSearchTerm = '';
+        let isDocSearchActive = false;
+
+        // NEW: Zoom State
+        let currentZoomLevel = 1.0;
+        const ZOOM_STEP = 0.1;
+        const MIN_ZOOM = 0.5;
+        const MAX_ZOOM = 2.0;
+        
+        // --- LLM API Configuration (Kept for reference, but functionality disabled) ---
+        const API_MODEL = "gemini-2.5-flash-preview-05-20";
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
+        
+        // Utility function to copy text and give feedback inside the iframe
+        function copyTextToClipboard(text, targetElement) {
+            
+            // --- Fallback Copy Logic (Uses deprecated but reliable document.execCommand) ---
+            function fallbackCopy() {
+                const textarea = document.createElement('textarea');
+                textarea.textContent = text;
+                // Add styles to hide and fix position, ensuring it's available for selection
+                textarea.style.cssText = `
+                    position: fixed; 
+                    top: 0; left: 0;
+                    width: 2em;
+                    height: 2em;
+                    padding: 0;
+                    border: none;
+                    outline: none;
+                    box-shadow: none;
+                    background: transparent;
+                `;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    // Execute the copy command
+                    document.execCommand('copy');
+                    return true;
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                    return false;
+                } finally {
+                    document.body.removeChild(textarea);
+                }
+            }
+            
+            // Check if the target is a clickable code element (PRE or CODE)
+            const isCodeElement = targetElement.tagName === 'PRE' || targetElement.tagName === 'CODE';
+            
+            // Function to show visual feedback directly on the element
+            function showFeedback() {
+                if (!isCodeElement) return; // Only show feedback on code elements
+                
+                 // We need the document context of the target element (which is inside the iframe)
+                const doc = targetElement.ownerDocument;
+                
+                // Remove any pre-existing feedback div to prevent stacking
+                let feedbackDiv = targetElement.querySelector('.copy-feedback');
+                if (feedbackDiv) feedbackDiv.remove();
+
+                // Create and style the feedback div
+                feedbackDiv = doc.createElement('div');
+                feedbackDiv.className = 'copy-feedback';
+                feedbackDiv.innerHTML = '<i class="fa-solid fa-clipboard-check mr-2"></i> COPIED!';
+                
+                // Must ensure the code block has position: relative for the absolute overlay to work
+                if (targetElement.tagName === 'CODE') {
+                    targetElement.style.position = 'relative';
+                }
+                
+                targetElement.appendChild(feedbackDiv);
+                
+                // Animate visibility
+                feedbackDiv.style.opacity = 1;
+
+                // Hide after 1.5s
+                setTimeout(() => {
+                    feedbackDiv.style.opacity = 0;
+                    // Clean up the feedback element after hiding
+                    setTimeout(() => {
+                        if (feedbackDiv.parentNode) {
+                            feedbackDiv.remove();
+                        }
+                    }, 500);
+                }, 1500);
+            }
+
+
+            // --- Core Copy Logic ---
+            // 1. Try modern Clipboard API (works if the iframe has permissions)
+            navigator.clipboard.writeText(text).then(() => {
+                showFeedback();
+            }).catch(() => {
+                // 2. Fallback to document.execCommand (more reliable in restricted iframes)
+                if (fallbackCopy()) {
+                    showFeedback();
+                } else {
+                     console.error('Clipboard access denied and fallback failed.');
+                }
+            });
+        }
+        
+        // Expose the global function for the iframe to call
+        window.copyTextToClipboard = copyTextToClipboard;
+
+        // --- LLM API Function (Disabled) ---
+        async function analyzeCode(codeId, codeContent) {
+            console.log(`[LLM Analysis] Received code, but feature is disabled: ${codeContent.substring(0, 50)}...`);
+        }
+
+
+        // --- SEARCH/FILTER LOGIC (Folder View) ---
+        function filterCards() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const documentViewIsVisible = !documentView.classList.contains('hidden');
+
+            if (documentViewIsVisible) {
+                // Document search is now handled by the dedicated document search bar/buttons
+                return;
+
+            } else {
+                // If in folder view, filter the cards
+                const cards = document.querySelectorAll('.folder-card');
+                
+                cards.forEach(card => {
+                    let cardVisible = false;
+                    const cardTitle = card.querySelector('.card-header span').textContent.toLowerCase();
+                    const docLinks = card.querySelectorAll('.doc-link');
+                    
+                    // 1. Check if card title matches
+                    if (cardTitle.includes(query)) {
+                        cardVisible = true;
+                    }
+                    
+                    // 2. Filter document links within the card
+                    docLinks.forEach(link => {
+                        const docName = link.querySelector('.doc-name').textContent.toLowerCase();
+                        if (docName.includes(query)) {
+                            link.style.display = 'flex'; // Show the link
+                            cardVisible = true; // Mark card as visible if any link matches
+                        } else {
+                            link.style.display = 'none'; // Hide the link
+                        }
+                    });
+
+                    // 3. Set card visibility based on matches
+                    if (cardVisible) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+        }
+        window.filterCards = filterCards;
+        
+        // --- NEW: DOCUMENT SEARCH LOGIC ---
+        function runDocumentSearch(query, searchBackward) {
+            const iframeWindow = documentFrame.contentWindow;
+            if (!iframeWindow || !query) return;
+
+            // Clear search highlights if query is being cleared or is very short
+            if (query.length < 2) {
+                // Search for an impossible string to clear previous selection
+                iframeWindow.find('____impossible_search_string____', false, false, true, false, true, false); 
+                isDocSearchActive = false;
+                currentDocSearchTerm = '';
+                return;
+            }
+            
+            // Syntax: window.find(aString, aCaseSensitive, aSearchBackward, aWrapAround, aWholeWord, aSearchInFrames, aShowDialog)
+            const found = iframeWindow.find(
+                query, 
+                false,          // aCaseSensitive (false)
+                searchBackward, // aSearchBackward (true for prev, false for next)
+                true,           // aWrapAround (true)
+                false,          // aWholeWord (false)
+                true,           // aSearchInFrames (true - this is important!)
+                false           // aShowDialog (false)
+            );
+            
+            isDocSearchActive = true;
+            currentDocSearchTerm = query;
+
+            if (!found) {
+                // If nothing is found (or looped around), provide visual feedback
+                const input = document.getElementById('doc-search-input');
+                input.style.boxShadow = 'inset 0 0 0 2px var(--danger-color), inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light)';
+                setTimeout(() => {
+                    // Restore original shadow after short delay
+                    input.style.boxShadow = 'inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light)';
+                }, 500);
+            }
+        }
+
+        // Function to show the document controls and clear old search data
+        function initializeDocumentViewControls() {
+            // NOTE: docSearchBar is a global reference
+            docSearchBar.classList.remove('hidden');
+            document.getElementById('doc-search-input').value = '';
+            currentDocSearchTerm = '';
+            isDocSearchActive = false;
+        }
+
+        // --- NEW: Image Lightbox Functions ---
+        function showImageLightbox(src) {
+            const lightboxOverlay = document.getElementById('lightbox-overlay');
+            const lightboxImage = document.getElementById('lightbox-image');
+            lightboxImage.src = src;
+            lightboxOverlay.classList.add('active');
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const folderCardGrid = document.getElementById('folder-card-grid');
+            const themeToggleHeader = document.getElementById('theme-toggle');
+            const backToGridBtn = document.getElementById('back-to-grid-btn');
+            const body = document.body;
+            const rootFolderTitle = document.getElementById('root-folder-title');
+            const zoomInBtn = document.getElementById('zoom-in-btn');
+            const zoomOutBtn = document.getElementById('zoom-out-btn');
+            const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
+            
+            // NEW Document Search Elements
+            const docSearchInput = document.getElementById('doc-search-input');
+            const docSearchPrev = document.getElementById('doc-search-prev');
+            const docSearchNext = document.getElementById('doc-search-next');
+
+            // --- Document Search Event Listeners ---
+
+            // Handle typing in the dedicated search bar
+            docSearchInput.addEventListener('input', () => {
+                const query = docSearchInput.value.trim();
+                if (query.length > 0) {
+                    // Start search from the top of the document
+                    runDocumentSearch(query, false);
+                } else {
+                    runDocumentSearch('', false); // Clear search
+                }
+            });
+
+            // Handle ENTER key to jump to the next/previous result
+            docSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const query = docSearchInput.value.trim();
+                    if (query.length > 0) {
+                        // Shift+Enter searches backward, Enter searches forward
+                        runDocumentSearch(query, e.shiftKey);
+                    }
+                }
+            });
+
+            // Handle next button click
+            docSearchNext.addEventListener('click', () => {
+                const query = docSearchInput.value.trim();
+                if (query.length > 0) {
+                    runDocumentSearch(query, false); // Search forward
+                }
+            });
+
+            // Handle previous button click
+            docSearchPrev.addEventListener('click', () => {
+                const query = docSearchInput.value.trim();
+                if (query.length > 0) {
+                    runDocumentSearch(query, true); // Search backward
+                }
+            });
+            // --- End Document Search Event Listeners ---
+            
+            // NEW: Global map to store image files for asset resolution
+            const assetFiles = new Map();
+
+            // NEW: Helper function to populate assets map from file input
+            function getAssetFiles(files) {
+                assetFiles.clear();
+                Array.from(files).forEach(file => {
+                    const fileName = file.name;
+                    // Get path relative to the root Notion folder, excluding the root folder name itself.
+                    const path = file.webkitRelativePath.split('/').slice(1).join('/'); 
+                    
+                    // Map 1: Full Path (relative to the folder containing the HTML files)
+                    assetFiles.set(path, file);
+                    
+                    // Map 2: Bare Filename (for Notion's simpler relative paths)
+                    assetFiles.set(fileName, file); 
+                });
+            }
+            
+            // NEW: Helper function to convert a File object to a Base64 encoded string
+            function encodeFileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64Data = reader.result;
+                        
+                        if (base64Data && base64Data.startsWith('data:')) {
+                            resolve(base64Data);
+                        } else {
+                            console.error(`Base64 encoding failed for file ${file.name}.`);
+                            resolve('data:application/octet-stream;base64,BROKEN');
+                        }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file); 
+                });
+            }
+            
+            // NEW: Helper function to find asset from path/name
+            function findAsset(path) {
+                if (!path) return null;
+                
+                // 1. Clean path (decode URI, remove parameters)
+                const cleanedPath = decodeURIComponent(path).split('?')[0]; 
+                
+                // 2. Try lookup by full cleaned path
+                let file = assetFiles.get(cleanedPath);
+                if (file) return file;
+                
+                // 3. Try lookup by bare filename (most common Notion path issue)
+                const bareFileName = cleanedPath.split('/').pop();
+                file = assetFiles.get(bareFileName);
+                if (file) return file;
+
+                return null;
+            }
+
+            // NEW: Core asset resolution logic for HTML DOM
+            async function resolveImagesInHtmlDom(doc) {
+                const images = doc.querySelectorAll('img');
+                const promises = [];
+
+                images.forEach(img => {
+                    let originalSrc = img.getAttribute('src');
+                    if (!originalSrc || originalSrc.startsWith('http') || originalSrc.startsWith('data:')) {
+                        return;
+                    }
+
+                    const file = findAsset(originalSrc);
+
+                    if (file) {
+                        promises.push(encodeFileToBase64(file).then(base64Url => {
+                            if (!base64Url.endsWith('BROKEN')) {
+                                img.setAttribute('src', base64Url);
+                                // Remove onerror to prevent it from hiding the image if Base64 loads
+                                img.removeAttribute('onerror'); 
+                            } else {
+                                img.setAttribute('onerror', 'this.style.display="none"');
+                            }
+                        }).catch(e => {
+                            console.error(`Error during Base64 resolution for ${file.name}:`, e);
+                            img.setAttribute('onerror', 'this.style.display="none"');
+                        }));
+                    } else {
+                        img.setAttribute('onerror', 'this.style.display="none"');
+                        console.warn(`Could not find asset for HTML image: ${originalSrc}`);
+                    }
+                });
+
+                await Promise.all(promises);
+            }
+            
+            // MODIFIED: Helper function to resolve image paths in Markdown
+            async function resolveMarkdownAssets(markdownContent) {
+                const imageRegex = /!\[.*?\]\(([^)]+)\)/g; 
+                let resolvedContent = markdownContent;
+                let promises = [];
+                let replacements = [];
+
+                const matches = [...markdownContent.matchAll(imageRegex)];
+                
+                for (const match of matches) {
+                    const fullMatch = match[0];
+                    const originalPath = match[1];
+                    
+                    const file = findAsset(originalPath);
+
+                    if (file) {
+                        promises.push(encodeFileToBase64(file).then(base64Url => {
+                            if (!originalPath.startsWith('data:') && !base64Url.endsWith('BROKEN')) {
+                                replacements.push({
+                                    original: fullMatch,
+                                    replacement: `<img src="${base64Url}" alt="Markdown Image" />`
+                                });
+                            } else if (base64Url.endsWith('BROKEN')) {
+                                replacements.push({
+                                    original: fullMatch,
+                                    replacement: '<!-- Image failed to load -->'
+                                });
+                            }
+                        }).catch(e => {
+                            console.error(`Error during Base64 resolution for ${file.name}:`, e);
+                            replacements.push({
+                                original: fullMatch,
+                                replacement: '<!-- Image failed to load -->'
+                            });
+                        }));
+                    } else {
+                         replacements.push({
+                            original: fullMatch,
+                            replacement: '<!-- Missing Image Asset -->'
+                        });
+                        console.warn(`Asset file not found in loaded folder for Markdown: ${originalPath}`);
+                    }
+                }
+                
+                await Promise.all(promises);
+
+                for (const rep of replacements) {
+                    resolvedContent = resolvedContent.replace(rep.original, rep.replacement);
+                }
+
+                return resolvedContent;
+            }
+
+            // --- MESSAGE LISTENER for Iframe Communication ---
+            window.addEventListener('message', (event) => {
+                // Security check: Ensure the message comes from a trusted source (e.g., our iframe)
+                if (event.source !== documentFrame.contentWindow) {
+                    return; 
+                }
+
+                const data = event.data;
+                if (data.action === 'analyzeCode') {
+                    // Call the LLM analysis function with data received from the iframe
+                    analyzeCode(data.codeId, data.codeContent);
+                }
+                
+                // Handle Copy Code message from the iframe
+                if (data.action === 'copyCode') {
+                    // targetElement must be found within the iframe's contentDocument
+                    const iframeDoc = documentFrame.contentDocument;
+                    if (iframeDoc) {
+                        // FIX: Target the element by its ID (which is the PRE or CODE element)
+                        const targetElement = iframeDoc.getElementById(data.preId);
+                        
+                        if (targetElement) {
+                             copyTextToClipboard(data.codeContent, targetElement);
+                        } else {
+                            console.error(`Target element with ID ${data.preId} not found in iframe for copying.`);
+                        }
+                    }
+                }
+                
+                // NEW: Handle Image Click message from the iframe
+                if (data.action === 'showLightbox') {
+                    showImageLightbox(data.src);
+                }
+            });
+
+            
+            // --- VIEW MANAGEMENT ---
+            function showView(viewId) {
+                
+                // CRITICAL FIX: Hide the main header search container when in document view
+                if (mainSearchContainer) {
+                    if (viewId === 'document') {
+                        mainSearchContainer.classList.add('hidden');
+                    } else {
+                        mainSearchContainer.classList.remove('hidden');
+                    }
+                }
+                
+                // Toggle visibility of the dedicated document search bar
+                if (docSearchBar) {
+                    if (viewId === 'document') {
+                        docSearchBar.classList.remove('hidden');
+                        document.getElementById('doc-search-input').focus();
+                    } else {
+                        docSearchBar.classList.add('hidden');
+                    }
+                }
+                
+                folderView.classList.add('hidden');
+                documentView.classList.add('hidden');
+                loadingArea.classList.add('hidden');
+
+                if (viewId === 'folder') {
+                    folderView.classList.remove('hidden'); 
+                } else if (viewId === 'document') {
+                    documentView.classList.remove('hidden');
+                } else {
+                    loadingArea.classList.remove('hidden');
+                }
+            }
+            
+            // --- THEME LOGIC ---
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('notionViewerTheme') || 'light'; 
+                body.classList.toggle('dark-mode', savedTheme === 'dark');
+                updateThemeButton(savedTheme);
+            }
+
+            function updateThemeButton(theme) {
+                const isDark = theme === 'dark';
+                const icon = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; 
+                themeToggleHeader.innerHTML = `<i class="${icon}">`;
+            }
+
+            function toggleTheme() {
+                const isDark = body.classList.toggle('dark-mode');
+                const newTheme = isDark ? 'dark' : 'light';
+                localStorage.setItem('notionViewerTheme', newTheme);
+                updateThemeButton(newTheme);
+                
+                const currentDocInfo = documentFiles.get(documentFrame.dataset.docId);
+                if (currentDocInfo && currentDocInfo.type !== 'pdf' && documentFrame.contentDocument && documentFrame.contentDocument.body) {
+                    // Apply theme immediately if document is HTML/MD
+                    applyIframeTheme(isDark);
+                    // Re-run code block styles to ensure buttons/analysis results get the right colors
+                    applyCodeBlockStyles(documentFrame.contentDocument.documentElement);
+                }
+            }
+
+            themeToggleHeader.addEventListener('click', toggleTheme);
+            
+            // NEW: Function to inject theme styles into the loaded iframe
+            function applyIframeTheme(isDarkMode) {
+                const iframeDoc = documentFrame.contentDocument;
+                if (!iframeDoc || !iframeDoc.head) return; 
+
+                let style = iframeDoc.getElementById('iframe-theme-style');
+                if (!style) {
+                    style = iframeDoc.createElement('style');
+                    style.id = 'iframe-theme-style';
+                    iframeDoc.head.appendChild(style);
+                }
+                
+                const rootStyles = window.getComputedStyle(document.documentElement);
+                const getVar = (v) => rootStyles.getPropertyValue(v).trim();
+                
+                const pageTextColor = isDarkMode ? getVar('--text-color') : getVar('--text-color');
+                const shadowLight = isDarkMode ? getVar('--shadow-light') : getVar('--shadow-light');
+                const shadowDark = isDarkMode ? getVar('--shadow-dark') : getVar('--shadow-dark');
+                
+                const iframeBodyBg = isDarkMode ? getVar('--bg-color') : getVar('--card-bg'); 
+                const notionContentBg = isDarkMode ? getVar('--card-bg') : 'transparent'; 
+                
+                style.textContent = `
+                    body {
+                        background-color: ${iframeBodyBg} !important; 
+                        color: ${pageTextColor} !important;
+                        box-shadow: inset 4px 4px 8px ${shadowDark}, inset -4px -4px 8px ${shadowLight} !important;
+                        /* FIX: Use max-width and margin auto for centering, remove explicit width */
+                        max-width: 1400px !important;
+                        width: 95% !important; /* Allow width to be fluid up to max-width */
+                    }
+                    
+                    .notion-page-content {
+                        background-color: ${notionContentBg} !important;
+                        padding: 10px !important; 
+                    }
+
+                    p, h1, h2, h3, h4, h5, h6, li, a, span, div, section {
+                        color: ${pageTextColor} !important;
+                    }
+                    
+                    .notion-page-content > div, 
+                    .notion-collection-page-on-page-block, 
+                    .notion-collection-view-block,
+                    .notion-callout-block,
+                    div[data-block-type], ul, ol {
+                        background-color: transparent !important;
+                    }
+                    
+                    /* NEW: Remove default border from details element in Notion HTML export */
+                    details {
+                        border-left: none !important; 
+                        padding-left: 0 !important;
+                        box-shadow: none !important; 
+                    }
+                    
+                    /* NEW: Remove the unwanted vertical line from Notion exported lists/indentation */
+                    .indented ul {
+                        list-style-type: none !important; 
+                        padding-left: 0 !important;
+                    }
+                `;
+            }
+            
+            loadTheme();
+            
+            // --- FILE LOADING & HIERARCHY LOGIC (Super Parent/Child Card) ---
+            
+            fileInput.addEventListener('change', (event) => {
+                const files = event.target.files;
+                if (files.length === 0) return;
+
+                documentFiles.clear();
+                folderCardGrid.innerHTML = '';
+                
+                const hierarchy = new Map();
+                let docCounter = 0;
+                let rootFolderName = 'Root Folder';
+
+                if (files.length > 0 && files[0].webkitRelativePath) {
+                     const pathParts = files[0].webkitRelativePath.split('/');
+                     rootFolderName = pathParts[0] || 'Root Folder';
+                }
+
+                // Call the new helper function to populate assets map
+                getAssetFiles(files); 
+                
+                Array.from(files).forEach(file => {
+                    const fileNameLower = file.name.toLowerCase();
+                    
+                    // MODIFIED: Accept .html, .pdf, and .md files
+                    if (fileNameLower.endsWith('.html') || fileNameLower.endsWith('.pdf') || fileNameLower.endsWith('.md')) {
+                        if (fileNameLower.includes('index.html')) {
+                            return;
+                        }
+
+                        const pathParts = file.webkitRelativePath.split('/');
+                        let cardName; 
+                        
+                        if (pathParts.length === 1) {
+                            cardName = rootFolderName;
+                        } else if (pathParts.length >= 2) {
+                            cardName = pathParts[1].replace(/-\w{32}$/, "").trim();
+                        } else {
+                             cardName = rootFolderName;
+                        }
+                        
+                        const docName = file.name.replace(/\.[^/.]+$/, "").replace(/-\w{32}$/, "").trim();
+
+                        if (fileNameLower.endsWith('.html') && docName === cardName) {
+                            return;
+                        }
+                        
+                        const docId = `doc-${Date.now()}-${docCounter++}`;
+                        
+                        let fileType;
+                        if (fileNameLower.endsWith('.pdf')) {
+                            fileType = 'pdf';
+                        } else if (fileNameLower.endsWith('.md')) {
+                            fileType = 'md'; // NEW type
+                        } else {
+                            fileType = 'html';
+                        }
+
+                        documentFiles.set(docId, {
+                            file: file,
+                            type: fileType
+                        });
+                        
+                        if (!hierarchy.has(cardName)) {
+                            hierarchy.set(cardName, []);
+                        }
+                        
+                        hierarchy.get(cardName).push({ 
+                            id: docId, 
+                            name: docName,
+                            type: fileType
+                        });
+                    }
+                });
+
+                if (documentFiles.size === 0) {
+                    rootFolderTitle.classList.add('hidden');
+                    folderCardGrid.innerHTML = `<p class="text-lg text-center col-span-full py-10" style="color: var(--danger-color);">No valid Notion HTML, PDF, or Markdown files found in the selected folder.</p>`;
+                    showView('folder');
+                    return;
+                }
+                
+                rootFolderTitle.classList.add('hidden');
+                renderFolderCards(hierarchy);
+                showView('folder');
+            });
+
+            // --- RENDERING CARD LAYOUT ---
+            function renderFolderCards(structure) {
+                folderCardGrid.innerHTML = '';
+                const sortedCardNames = Array.from(structure.keys()).sort();
+
+                for (const cardName of sortedCardNames) {
+                    const files = structure.get(cardName);
+                    if (files.length === 0) continue; 
+
+                    const folderCard = document.createElement('div');
+                    folderCard.className = 'folder-card';
+
+                    const header = document.createElement('div');
+                    header.className = 'card-header';
+                    
+                    header.innerHTML = `
+                        <span class="text-xl font-bold">
+                           ${cardName}
+                        </span>`;
+                    folderCard.appendChild(header);
+
+                    const listContainer = document.createElement('div');
+                    listContainer.className = 'document-list';
+                    
+                    files.sort((a, b) => a.name.localeCompare(b.name));
+
+                    files.forEach(doc => {
+                        const link = document.createElement('a');
+                        link.className = 'doc-link';
+                        link.dataset.docId = doc.id;
+                        
+                        let docIcon;
+                        if (doc.type === 'pdf') {
+                            docIcon = 'fa-solid fa-file-pdf';
+                        } else if (doc.type === 'md') {
+                            docIcon = 'fa-brands fa-markdown'; // NEW icon for Markdown
+                        } else if (doc.name.toLowerCase().includes('portal') || doc.name.toLowerCase().includes('aws')) {
+                            docIcon = 'fa-solid fa-globe';
+                        } else {
+                            docIcon = 'fa-solid fa-file-lines';
+                        }
+
+                        link.innerHTML = `<i class="${docIcon}"></i> <span class="doc-name">${doc.name}</span>`;
+                        listContainer.appendChild(link);
+                        
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            loadDocument(doc.id);
+                        });
+                    });
+                    
+                    folderCard.appendChild(listContainer);
+                    folderCardGrid.appendChild(folderCard);
+                }
+            }
+            
+            // Function to apply styles to the document structure
+            function applyCodeBlockStyles(docContent) {
+                // Find <pre> tags which are immediate children of Notion's code div
+                const codeDivs = docContent.querySelectorAll('div[data-block-type="code"]');
+                
+                // Find all inline code blocks
+                const inlineCodes = docContent.querySelectorAll('code:not(pre code)');
+                
+                // FIX: Get the Document object associated with the element
+                const doc = docContent.ownerDocument || docContent;
+
+                const rootStyles = window.getComputedStyle(document.documentElement);
+                const colors = [
+                    '--code-bg', '--code-text', '--card-bg', '--subtle-text', '--success-color', 
+                    '--shadow-dark', '--shadow-light', '--bg-color', '--text-color',
+                    '--primary-color', '--info-bg', '--info-text', '--primary-light'
+                ];
+                let varStyles = ':root {';
+                colors.forEach(v => { varStyles += `${v}: ${rootStyles.getPropertyValue(v)};`; });
+                varStyles += '}';
+
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const bodyBgColor = isDarkMode ? 'var(--bg-color)' : 'var(--card-bg)';
+                const pageTextColor = isDarkMode ? 'var(--text-color)' : 'var(--text-color)';
+                const shadowLight = isDarkMode ? 'var(--shadow-light)' : 'var(--shadow-light)';
+                const shadowDark = isDarkMode ? 'var(--shadow-dark)' : 'var(--shadow-dark)';
+                
+                const existingStyle = docContent.querySelector('#dynamic-styles');
+                if (existingStyle) existingStyle.remove();
+
+                const style = doc.createElement('style');
+                style.id = 'dynamic-styles';
+                style.textContent = `
+                    ${varStyles}
+                    
+                    /* FIXED: Ensure content is correctly centered and wide */
+                    body {
+                        /* NEW: Reduced max-width to 1400px for better centering and stability */
+                        max-width: 1400px !important; 
+                        /* FIX: Removed explicit width, rely on max-width and margin auto */
+                        margin: 5px auto !important; 
+                        
+                        background-color: ${bodyBgColor} !important; 
+                        color: ${pageTextColor} !important;
+                        box-shadow: inset 4px 4px 8px ${shadowDark}, inset -4px -4px 8px ${shadowLight} !important;
+                        border-radius: 16px;
+                        padding: 20px !important; 
+                        min-height: calc(100vh - 40px);
+                    }
+                    
+                    p, h1, h2, h3, h4, h5, h6, li, a, span {
+                        color: ${pageTextColor} !important;
+                    }
+                    
+                    /* FIX: Images are constrained to max-width of container */
+                    img {
+                        /* Set a smaller fixed maximum size for better non-blurry scaling */
+                        max-width: 90% !important; 
+                        height: auto !important;
+                        object-fit: scale-down !important; 
+                        margin: 15px auto !important; /* Center images */
+                        display: block !important;
+                        cursor: zoom-in; /* Indicate click for zoom */
+                    }
+
+                    div[data-block-type], ul, ol,
+                    .notion-page-content, 
+                    .notion-collection-page-on-page-block, 
+                    .notion-collection-view-block,
+                    .notion-callout-block,
+                    .notion-callout-block > div:first-child,
+                    .notion-toggle-block > div:first-child,
+                    .notion-quote-block > div:first-child,
+                    .notion-list-block > div:first-child {
+                        background-color: transparent !important;
+                    }
+                    
+                    * {
+                        font-family: 'Inter', sans-serif !important;
+                    }
+
+
+                    /* Reset Notion code styles and enforce readability */
+                    /* NOTE: Notion usually nests content inside <code>, so we target the outer <pre> */
+                    pre {
+                        font-family: monospace, monospace !important;
+                        font-size: 1.1rem !important;
+                        background-color: var(--code-bg) !important;
+                        color: var(--code-text) !important;
+                        line-height: 1.6;
+                        border-radius: 12px;
+                        padding: 1rem !important;
+                        position: relative; /* Setting position relative on PRE is important for nested button visibility */
+                        overflow-x: auto;
+                        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+                        padding-top: 20px !important; 
+                        display: block; /* Ensure it's a block-level container */
+                        min-height: 80px; 
+                        border-bottom: none !important;
+                        cursor: pointer; /* NEW: Indicate clickable area */
+                    }
+                    
+                    pre:hover {
+                         opacity: 0.95;
+                         box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+                    }
+
+                    pre * {
+                        font-size: 1.1rem !important;
+                        background-color: transparent !important;
+                        color: var(--code-text) !important;
+                        margin: 0 !important;
+                        padding: 0 !important; 
+                        display: inline;
+                        word-break: break-all !important;
+                        white-space: pre-wrap !important;
+                    }
+                    
+                    .code-content-wrapper {
+                        word-break: break-all !important;
+                        white-space: pre-wrap !important; 
+                        display: block; 
+                        padding: 10px 10px; 
+                        margin: 0;
+                        line-height: 1.5;
+                        padding-top: 20px; 
+                        padding-bottom: 20px;
+                    }
+                    
+                    /* NEW: Inline Code Styling for Click-to-Copy (for command sections) */
+                    code:not(pre code) {
+                        display: inline-block !important; 
+                        background-color: var(--primary-light) !important;
+                        color: var(--primary-color) !important;
+                        padding: 2px 6px !important;
+                        border-radius: 6px !important;
+                        font-size: 0.95em !important;
+                        font-weight: 600 !important;
+                        cursor: pointer !important;
+                        position: relative !important; 
+                        transition: all 0.1s !important;
+                        word-break: break-all !important;
+                        white-space: pre-wrap !important;
+                    }
+                    
+                    code:not(pre code):hover {
+                         box-shadow: 0 0 5px rgba(74, 144, 226, 0.5) !important;
+                    }
+                    
+                    /* Analysis result container styles remains */
+
+                    .analysis-result-container {
+                        margin-top: 10px;
+                        padding: 12px;
+                        border-radius: 10px;
+                        background-color: var(--info-bg);
+                        color: var(--info-text);
+                        font-size: 0.9rem;
+                        border-left: 5px solid var(--primary-color);
+                        white-space: pre-wrap;
+                        overflow-x: auto;
+                    }
+                    
+                    /* NEW: Feedback animation overlay */
+                    .copy-feedback {
+                        background: rgba(74, 144, 226, 0.9) !important;
+                        color: white !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        font-weight: 700 !important;
+                        font-size: 1.2rem !important;
+                        border-radius: 12px !important;
+                        opacity: 0 !important;
+                        transition: opacity 0.3s !important;
+                        pointer-events: none !important;
+                        z-index: 5 !important;
+                        position: absolute !important;
+                        top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+
+
+                    /* FINAL FIXES: Aggressively target Notion's outer code block wrapper */
+                    div[data-block-type="code"], .notion-code-block {
+                        border: none !important;
+                        padding: 0 !important;
+                        box-shadow: none !important; 
+                        position: relative !important;
+                    }
+                    
+                    /* FIX: Force text to wrap in list items and paragraphs to prevent horizontal scrolling/shifting */
+                    li, p {
+                        word-break: break-word !important; 
+                    }
+                    
+                    /* === NEW: Styling for Markdown/HTML List Toggles (details/summary) === */
+                    
+                    /* Visual styling to make it look like a summary area */
+                    details {
+                        /* The core fix to remove the grey vertical line */
+                        border-left: none !important; 
+                        padding-left: 0 !important;
+                        margin-bottom: 8px;
+                        transition: background-color 0.2s;
+                        /* Removed box-shadow here to prevent double shading */
+                        box-shadow: none; 
+                    }
+                    
+                    /* IMPORTANT: Style the summary to look like a clean toggle bar */
+                    details > summary {
+                         padding: 8px 10px 8px 1.5em; /* Added vertical padding for height, increased left padding for arrow */
+                         font-weight: 600;
+                         border-radius: 8px; /* Subtle rounding for the toggle bar */
+                         background-color: var(--bg-color); /* Light background to make it stand out against the document body */
+                         transition: background-color 0.2s, color 0.2s;
+                         box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light); /* Give it a slightly 'pressed' look */
+                    }
+
+                    details > summary:hover {
+                         background-color: var(--primary-light);
+                         color: var(--primary-color);
+                         box-shadow: inset 1px 1px 3px var(--shadow-dark), inset -1px -1px 3px var(--shadow-light); 
+                    }
+
+                    /* FIX: Ensure native <details> uses the correct visual markers */
+                    details {
+                        list-style: none; 
+                        cursor: pointer;
+                        padding-left: 0 !important;
+                        margin-bottom: 8px !important;
+                    }
+                    
+                    /* Remove default marker and add custom one */
+                    details > summary {
+                        list-style: none !important;
+                        position: relative;
+                        /* Reset padding/margin of native summary */
+                        margin: 0 !important; 
+                    }
+                    
+                    /* Add custom triangle icon before summary */
+                    details summary:before {
+                        content: '\f0da'; /* Right arrow icon (fa-caret-right) */
+                        font-family: "Font Awesome 6 Free" !important;
+                        font-weight: 900 !important;
+                        position: absolute;
+                        left: 8px; /* Adjusted position to be inside the styled summary bar */
+                        top: 50%;
+                        transform: translateY(-50%) scale(0.8); 
+                        color: var(--text-color);
+                        transition: transform 0.2s;
+                        font-size: 1.1rem;
+                    }
+                    
+                    /* Custom arrow for open state (down-pointing) */
+                    details[open] summary:before {
+                        content: '\f0d7'; /* Down arrow icon (fa-caret-down) */
+                    }
+                    
+                    /* Apply subtle styling to the content inside the details block for separation */
+                    details > :not(summary) {
+                        padding: 10px 10px 10px 20px; /* Add internal padding */
+                        background-color: var(--card-bg); /* Use card background for inner content */
+                        border-radius: 0 0 8px 8px;
+                        /* Add a subtle top border to separate content from the summary bar */
+                        border-top: 1px solid var(--border-color);
+                        margin-top: 0;
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+                    }
+
+                    /* --- Inner Content Styling for Lists and Text (when inside details) --- */
+
+                    details > :not(summary) li {
+                        /* Match background of the containing box (var(--card-bg)) */
+                        background-color: var(--card-bg) !important;
+                        /* Add a light inner shadow/border for lists inside the content box */
+                        box-shadow: none !important;
+                        padding: 4px 8px !important;
+                        border-radius: 4px;
+                        margin-bottom: 4px;
+                    }
+                    
+                    details > :not(summary) p, 
+                    details > :not(summary) table, 
+                    details > :not(summary) pre {
+                         /* Add a little vertical spacing to nested elements */
+                         margin: 10px 0 !important; 
+                    }
+
+                    details > :not(summary) li {
+                        /* Add space to the left to align lists nicely inside the box */
+                        margin-left: 20px !important; 
+                    }
+
+                    /* Styling for the purple tag in the image provided */
+                    mark.highlight-purple_background {
+                        background: rgba(154, 107, 180, 0.15) !important;
+                        padding: 2px 5px;
+                        border-radius: 4px;
+                        font-weight: 600;
+                    }
+
+                    /* === END NEW LIST TOGGLE STYLES === */
+                    
+                    /* === Legacy Styles (Kept for completeness but likely overridden) === */
+
+                    /* Ensure the clickable header is distinct */
+                    div[data-block-type="toggle"] > div:first-child {
+                        padding: 4px 0;
+                    }
+
+                    div[data-block-type="toggle"] > div:first-child:hover {
+                         background-color: var(--primary-light);
+                    }
+
+                    /* Logic to rotate the arrow icon within the Notion block */
+                    .toggle-arrow {
+                         transition: transform 0.2s;
+                    }
+
+                    /* Rotate the arrow (down) when open (Notion often uses a 0deg right-pointing character) */
+                    .notion-toggle-block-open .toggle-arrow {
+                        transform: rotate(90deg) !important;
+                    }
+                `;
+                
+                const head = docContent.querySelector('head');
+                if (head) head.appendChild(style);
+
+                let codeBlockCounter = 0; // Counter for unique IDs
+
+                // --- 1. Block Code Logic (PRE tags) ---
+                codeDivs.forEach(codeDiv => {
+                    const codeBlock = codeDiv.querySelector('pre');
+                    if (!codeBlock) return;
+                    
+                    // --- 1. Content Extraction ---
+                    const codeContainer = codeBlock.querySelector('code, span');
+                    const textToCopy = (codeContainer || codeBlock).textContent.trim();
+                    if (!textToCopy) return;
+
+                    // 0. Assign unique ID to the code block for PostMessage targeting
+                    const codeId = `code-block-${codeBlockCounter++}`;
+                    codeBlock.id = codeId;
+
+                    // Remove existing elements (buttons and analysis container)
+                    codeDiv.querySelectorAll('.copy-code-btn, .analysis-result-container').forEach(el => el.remove());
+                    
+                    // 1. Clear the pre content and wrap text in a span for proper layout/sizing
+                    codeBlock.innerHTML = '';
+                    
+                    const contentWrapper = doc.createElement('span');
+                    contentWrapper.className = 'code-content-wrapper'; 
+                    contentWrapper.textContent = textToCopy; 
+                    codeBlock.appendChild(contentWrapper);
+                    
+                    // --- 2. Implement On-Click Copy for the entire PRE block ---
+                    codeBlock.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Send message to parent window to trigger the global copy function
+                        window.parent.postMessage({
+                            action: 'copyCode',
+                            codeContent: textToCopy,
+                            preId: codeId // Pass the ID of the PRE block as the target element
+                        }, '*');
+                    });
+
+                    // 3. Add placeholder for LLM Analysis Result Container (hidden by default)
+                    const resultContainer = doc.createElement('div');
+                    resultContainer.className = 'analysis-result-container hidden';
+                    codeDiv.appendChild(resultContainer);
+                });
+                
+                // --- 2. Inline Code Logic (CODE tags - for commands) ---
+                const inlineCodeElements = docContent.querySelectorAll('code:not(pre code)');
+                
+                inlineCodeElements.forEach(inlineCode => {
+                    
+                    // 0. Assign unique ID to the inline code block
+                    const codeId = `inline-code-${codeBlockCounter++}`;
+                    inlineCode.id = codeId;
+                    
+                    // We must use textContent on the wrapper to avoid copying the HTML tags inside the code block
+                    const textToCopy = inlineCode.textContent.trim();
+                    if (!textToCopy) return;
+                    
+                    // 1. Wrap content in a span (optional but good for consistency/styling)
+                    // We use innerHTML to preserve any internal Notion formatting inside the code block
+                    const originalContent = inlineCode.innerHTML; 
+                    inlineCode.innerHTML = '';
+                    
+                    const contentWrapper = doc.createElement('span');
+                    contentWrapper.className = 'inline-code-content-wrapper'; 
+                    contentWrapper.innerHTML = originalContent; 
+                    inlineCode.appendChild(contentWrapper);
+                    
+                    // 2. Implement On-Click Copy for the entire CODE block
+                    inlineCode.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Send message to parent window to trigger the global copy function
+                        window.parent.postMessage({
+                            action: 'copyCode',
+                            codeContent: textToCopy,
+                            preId: codeId // Pass the ID of the CODE block as the target element
+                        }, '*');
+                    });
+                });
+                
+                // NEW: Add event listener to images in the iframe for lightbox functionality
+                docContent.querySelectorAll('img').forEach(img => {
+                    img.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Send message to parent window to open lightbox
+                        window.parent.postMessage({
+                            action: 'showLightbox',
+                            src: img.src
+                        }, '*');
+                    });
+                });
+                
+                // NEW: Add event listener to Markdown-converted details tags for individual toggle
+                docContent.querySelectorAll('details summary').forEach(summary => {
+                    summary.addEventListener('click', (e) => {
+                         // Prevents default behavior in case we want custom animations, but maintains functionality
+                        e.stopPropagation();
+                    });
+                });
+            }
+
+            // --- HTML TOGGLE FIX (For Notion/Markdown exports using <details>) ---
+            function activateNotionToggles(iframeDoc) {
+                if (!iframeDoc) return;
+                
+                // FIX 1: Target and fix ALL native <details> elements used by Notion export/Markdown
+                const detailsElements = iframeDoc.querySelectorAll('details');
+                
+                // 3. Attach a single, global listener to the document body to catch clicks
+                iframeDoc.body.addEventListener('click', (e) => {
+                    const summary = e.target.closest('summary');
+                    
+                    if (summary) {
+                        e.stopPropagation(); 
+                        e.preventDefault(); 
+
+                        const details = summary.parentElement;
+                        
+                        if (details && details.tagName === 'DETAILS') {
+                             if (details.hasAttribute('open')) {
+                                 details.removeAttribute('open');
+                             } else {
+                                 details.setAttribute('open', '');
+                             }
+                        }
+                    }
+                }, true); 
+
+                
+                detailsElements.forEach(details => {
+                    // 1. Force Collapse
+                    if (details.hasAttribute('open')) {
+                        details.removeAttribute('open');
+                    }
+                    
+                    // 2. Remove any inline onclick handlers
+                    const summary = details.querySelector('summary');
+                    if (summary) {
+                        summary.onclick = null; 
+                        summary.style.cursor = 'pointer';
+                    }
+                });
+
+
+                // FIX 2: Legacy fallback for old/generic Notion DIV blocks 
+                const containers = iframeDoc.querySelectorAll('div[data-block-type="toggle"], div.notion-list-item, div[data-block-type]');
+                
+                containers.forEach(toggleBlock => {
+                    const header = toggleBlock.children[0]; 
+
+                    if (!header || (!header.querySelector('[role="button"]') && !header.querySelector('span:first-child[style*="transform"]'))) {
+                        return;
+                    }
+
+                    const contentBlocks = [];
+                    for (let i = 1; i < toggleBlock.children.length; i++) {
+                        const child = toggleBlock.children[i];
+                        if (child.nodeType === 1) { 
+                            contentBlocks.push(child);
+                        }
+                    }
+                    
+                    if (contentBlocks.length === 0) {
+                        return;
+                    }
+
+                    const arrowContainer = header.querySelector('div[role="button"]');
+                    const arrowWrapper = arrowContainer ? arrowContainer.querySelector(':scope > div:first-child') : null;
+
+                    if (arrowWrapper) {
+                        arrowWrapper.classList.add('toggle-arrow');
+                    }
+                    
+                    const isInitiallyVisible = toggleBlock.classList.contains('notion-toggle-block-open') || (contentBlocks.length > 0 && contentBlocks[0].style.display !== 'none' && contentBlocks[0].style.display !== '');
+                    
+                    if (isInitiallyVisible) {
+                         toggleBlock.classList.add('notion-toggle-block-open');
+                         contentBlocks.forEach(block => block.style.display = 'block');
+                    } else {
+                         toggleBlock.classList.remove('notion-toggle-block-open');
+                         contentBlocks.forEach(block => block.style.display = 'none'); // Force hide
+                    }
+
+                    header.style.cursor = 'pointer';
+                    header.setAttribute('tabindex', '0'); 
+                    
+                    header.onclick = null;
+
+                    const toggleAction = (e) => {
+                        if (e.target.tagName === 'A' || e.target.closest('a') || e.target.tagName === 'BUTTON') return;
+                        
+                        e.preventDefault(); 
+                        e.stopPropagation();
+                        
+                        const isCurrentlyVisible = toggleBlock.classList.contains('notion-toggle-block-open');
+                        
+                        if (isCurrentlyVisible) {
+                            contentBlocks.forEach(block => block.style.display = 'none');
+                            toggleBlock.classList.remove('notion-toggle-block-open');
+                        } else {
+                            contentBlocks.forEach(block => block.style.display = 'block');
+                            toggleBlock.classList.add('notion-toggle-block-open');
+                        }
+                    };
+                    
+                    header.addEventListener('click', toggleAction);
+                    header.onkeydown = (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            toggleAction(e);
+                        }
+                    };
+                });
+            }
+            // --- END HTML TOGGLE FIX ---
+            
+            // --- NEW: MARKDOWN LIST TO TOGGLE CONVERSION (More Robust) ---
+            function convertListToToggle(doc) {
+                
+                // --- Helper function to check if a node is a header trigger ---
+                // ICON_PREFIXES includes emojis and number emojis
+                const ICON_PREFIXES = ['🔹', '🔴', '📌', '🛠', '📝', '🔗', '💡', '✅', '❌', '🔄', '🚀', '🏆', '📁', '⚙️', '🔍', '📂', '📜', '🔑', '2️⃣', '1️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🎯', '🚨'];
+                
+                // Added explicit text matches for non-icon headers that appear in your documents
+                const EXPLICIT_HEADERS = [
+                    '**Create Zip file & Upload REX File:**',
+                    '**WINSCP CREDENTIALS:**',
+                    '**Last OutPut need to update in CTASK:**',
+                    '🎯 **How to Monitor Running Jobs**', 
+                    '🚨 **Escalation Matrix** 🚨',
+                ];
+
+                function isToggleTrigger(node) {
+                     if (!node || node.nodeType !== 1) return false;
+                     
+                     // Check for major headings (H1, H2, H3) - handled in Pass 1, stop point in Pass 2
+                     if (node.tagName.startsWith('H') && parseInt(node.tagName.substring(1)) <= 3) {
+                         return true;
+                     }
+                     
+                     // Check for HR as a stop point
+                     if (node.tagName === 'HR') return true;
+                     
+                     // Check for List Items or Paragraphs
+                     if (node.tagName === 'P' || node.tagName === 'LI' || node.tagName === 'SUMMARY') {
+                         const headerText = node.textContent.trim();
+                         
+                         // Check 1: Icon Prefixes
+                         if (ICON_PREFIXES.some(prefix => headerText.startsWith(prefix))) return true;
+                         
+                         // Check 2: Explicit Text Match (for headers without icons, or starting with just bold)
+                         if (EXPLICIT_HEADERS.includes(headerText)) return true;
+                         
+                         // Check 3: Headers starting with **bold text** if (headerText.startsWith('**') && headerText.endsWith('**')) return true;
+
+                         // Check 4: Headers starting with a number emoji and bold (e.g., 2️⃣ **DM (Data Mover)**)
+                         if (ICON_PREFIXES.slice(17, 26).some(prefix => headerText.startsWith(prefix))) return true;
+
+                     }
+                     return false;
+                }
+                
+                // ----------------------------------------------------------------
+                // PASS 1: Convert Markdown Headings (H3) into Top-Level Collapsible Blocks
+                // ----------------------------------------------------------------
+                const headings = doc.querySelectorAll('h3');
+                
+                headings.forEach(h3 => {
+                    if (h3.closest('details')) return;
+
+                    let currentElement = h3.nextElementSibling;
+                    const detailNodes = [];
+                    
+                    // Collect all siblings until the next H1, H2, H3, or Horizontal Rule (HR)
+                    while (currentElement && 
+                           currentElement.tagName !== 'H1' &&
+                           currentElement.tagName !== 'H2' && 
+                           currentElement.tagName !== 'H3' && 
+                           currentElement.tagName !== 'HR') {
+                        detailNodes.push(currentElement);
+                        currentElement = currentElement.nextElementSibling;
+                    }
+
+                    if (detailNodes.length > 0) {
+                        const details = doc.createElement('details');
+                        const summary = doc.createElement('summary');
+                        
+                        summary.innerHTML = h3.innerHTML;
+                        details.appendChild(summary);
+                        
+                        const detailsFragment = doc.createDocumentFragment();
+                        detailNodes.forEach(node => detailsFragment.appendChild(node));
+                        details.appendChild(detailsFragment);
+
+                        h3.parentElement.insertBefore(details, h3);
+                        h3.remove(); 
+                    }
+                });
+
+                
+                // ----------------------------------------------------------------
+                // PASS 2: Convert Complex Icon-Prefixed Toggles (P, LI) in reverse order for nesting
+                // ----------------------------------------------------------------
+                
+                // Nodes to check: All relevant block elements.
+                const allElements = doc.querySelectorAll('body > p, body > ul > li, body > ol > li, details li, details p');
+                const nodesToProcess = Array.from(allElements);
+
+                for (let i = nodesToProcess.length - 1; i >= 0; i--) {
+                    const header = nodesToProcess[i];
+
+                    // --- CRASH FIX: Check if the header element is still valid ---
+                    if (!header) continue;
+                    
+                    // 1. Skip if not a trigger or already wrapped
+                    if (!isToggleTrigger(header) || header.closest('details summary')) continue;
+                    
+                    let detailNodes = [];
+                    let parentNode = header.parentElement;
+                    
+                    // --- SCENARIO A: Handle content *inside* the LI element (nested content) ---
+                    if (header.tagName === 'LI') {
+                        let childNodes = Array.from(header.childNodes);
+                        let contentStart = -1;
+
+                        // Find the point where the main LI text ends and content blocks begin
+                        for(let j = 0; j < childNodes.length; j++) {
+                            let child = childNodes[j];
+                            // Once a non-text, block-level element is found (UL/OL/P/DIV), we start capturing
+                            if (child.nodeType === 1 && (child.tagName === 'UL' || child.tagName === 'OL' || child.tagName === 'P' || child.tagName === 'DIV' || child.tagName === 'PRE' || child.tagName === 'TABLE')) {
+                                contentStart = j;
+                                break;
+                            }
+                        }
+                        
+                        if (contentStart !== -1) {
+                            for (let k = contentStart; k < childNodes.length; k++) {
+                                if (childNodes[k].nodeType === 1) { 
+                                    detailNodes.push(childNodes[k]);
+                                }
+                            }
+                            // Remove content that was moved to detailNodes to clean up the LI
+                            detailNodes.forEach(node => header.removeChild(node));
+                        }
+                    }
+
+                    // --- SCENARIO B: Collect SIBLINGS (Crucial for fragmented blocks) ---
+                    let currentElement = header.nextElementSibling;
+                    const contentTags = ['P', 'UL', 'OL', 'PRE', 'TABLE', 'FIGURE', 'BLOCKQUOTE', 'DIV'];
+
+                    while (currentElement) {
+                        // Check for major structural breaks (HR, H1, H2, H3)
+                        if (currentElement.tagName === 'HR' || currentElement.tagName.startsWith('H')) {
+                            break;
+                        }
+
+                        // Check if the current element is the start of a *new* sibling toggle trigger
+                        if (isToggleTrigger(currentElement)) {
+                            // Stop collecting siblings if the next element is itself a new trigger at the same level.
+                             break;
+                        }
+                        
+                        // If it's a piece of content, collect it
+                        if (contentTags.includes(currentElement.tagName)) {
+                            detailNodes.push(currentElement);
+                        } else if (currentElement.tagName === 'UL' || currentElement.tagName === 'OL') {
+                            // Always collect freestanding UL/OL after a header
+                            detailNodes.push(currentElement);
+                        } else {
+                            // Ignore text nodes, comments, or other non-block elements. Continue loop.
+                        }
+                        
+                        // Move to the next sibling
+                        currentElement = currentElement.nextElementSibling;
+                    }
+                    
+                    // 2. Perform the wrap operation
+                    if (detailNodes.length > 0) {
+                        const details = doc.createElement('details');
+                        const summary = doc.createElement('summary');
+                        summary.innerHTML = header.innerHTML; 
+                        details.appendChild(summary);
+                        
+                        const detailsFragment = doc.createDocumentFragment();
+                        detailNodes.forEach(node => detailsFragment.appendChild(node));
+                        details.appendChild(detailsFragment);
+
+                        // CRITICAL NESTING FIX: Check if the previous sibling was an already-wrapped toggle.
+                        const previousDetails = header.previousElementSibling;
+                        const targetParentDetails = previousDetails && previousDetails.tagName === 'DETAILS' ? previousDetails : null;
+
+                        if (targetParentDetails) {
+                            // If the immediate predecessor was a <details> block, we assume the current one
+                            // should be nested inside it (the subchild out of box problem).
+                            targetParentDetails.appendChild(details);
+                        } else {
+                            // Otherwise, insert the new details block normally at the location of the old header.
+                            parentNode.insertBefore(details, header);
+                        }
+                        
+                        // Remove the original header (LI or P)
+                        header.remove();
+                    }
+                }
+            }
+            // --- END MARKDOWN LIST TO TOGGLE CONVERSION ---
+
+            function loadDocument(docId) {
+                const docInfo = documentFiles.get(docId);
+                if (!docInfo || !docInfo.file) return;
+
+                const file = docInfo.file;
+                const fileType = docInfo.type;
+
+                documentFrame.dataset.docId = docId;
+
+                // NEW: Initialize the document search bar and state
+                initializeDocumentViewControls(); 
+
+                showView('document');
+                
+                currentZoomLevel = 1.0;
+                documentFrame.style.transform = `scale(${currentZoomLevel})`;
+
+                if (fileType === 'pdf') {
+                    documentFrame.style.backgroundColor = 'var(--bg-color)'; 
+
+                    const url = URL.createObjectURL(file);
+                    
+                    if (documentFrame.src && documentFrame.src.startsWith('blob:')) {
+                        URL.revokeObjectURL(documentFrame.src);
+                    }
+                    
+                    documentFrame.src = `${url}#toolbar=0&navpanes=0`;
+                    documentFrame.onload = null;
+                } else {
+                    documentFrame.style.backgroundColor = 'var(--card-bg)'; 
+
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        let content = e.target.result;
+                        let htmlContent;
+
+                        if (fileType === 'md') {
+                            // --- BEGIN MARKDOWN PROCESSING ---
+                            // 1. Resolve image paths first (ASYNC step)
+                            content = await resolveMarkdownAssets(content);
+                            
+                            // 2. Convert raw markdown content directly to HTML using marked.js
+                            let markdownHtml = marked.parse(content); 
+                            
+                            // 3. Wrap in full HTML structure
+                            htmlContent = `
+                                <!DOCTYPE html>
+                                <html lang="en">
+                                <head>
+                                    <meta charset="UTF-8">
+                                    <title>Markdown Document</title>
+                                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                                    <style>
+                                        /* Basic Markdown Styles for clean viewing */
+                                        body { padding: 20px; font-family: 'Inter', sans-serif; }
+                                        pre { background-color: #f4f4f4; padding: 15px; border-radius: 8px; overflow-x: auto; }
+                                        code { font-family: monospace; }
+                                        img { height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: block; margin: 15px 0; }
+                                        h1, h2, h3 { margin-top: 1.5em; }
+                                        ul, ol { margin-left: 20px; }
+                                    </style>
+                                </head>
+                                <body>
+                                    ${markdownHtml}
+                                </body>
+                                </html>
+                            `;
+                            // --- END MARKDOWN PROCESSING ---
+
+                        } else {
+                            // HTML loading (Standard Notion HTML)
+                            htmlContent = content;
+                        }
+                        
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(htmlContent, 'text/html');
+                        
+                        // --- NEW: HTML Image Resolution (applies only to HTML files) ---
+                        if (fileType === 'html') {
+                            await resolveImagesInHtmlDom(doc);
+                            
+                            // Also handle links/PDFs to prevent breaking local navigation (still needed after image fix)
+                            doc.documentElement.querySelectorAll('a[href]').forEach(el => {
+                                let value = el.getAttribute('href');
+                                if (value && !value.startsWith('http') && !value.startsWith('mailto') && !value.startsWith('#')) {
+                                    const fileName = value.split('/').pop();
+                                    el.setAttribute('href', fileName);
+                                }
+                            });
+                        }
+                        
+                        // Ensure native <details> (from MD conversion) are closed by default
+                        doc.documentElement.querySelectorAll('details[open]').forEach(details => {
+                            details.removeAttribute('open');
+                        });
+                        
+                        // Clean up base tags and relative paths that aren't images/links
+                        doc.documentElement.querySelectorAll('[src], [href]').forEach(el => {
+                            if (el.tagName === 'BASE') {
+                                 el.remove();
+                            }
+                        });
+
+                        // We must apply code block styles *before* loading the iframe to inject initial styles/buttons
+                        applyCodeBlockStyles(doc.documentElement); 
+
+                        // Re-serialize the corrected HTML content
+                        htmlContent = doc.documentElement.outerHTML;
+                        
+                        const blob = new Blob([htmlContent], { type: 'text/html' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        if (documentFrame.src && documentFrame.src.startsWith('blob:')) {
+                            URL.revokeObjectURL(documentFrame.src);
+                        }
+                        
+                        documentFrame.src = url;
+
+                        documentFrame.onload = () => {
+                            const currentThemeIsDark = body.classList.contains('dark-mode'); 
+                            const iframeDoc = documentFrame.contentDocument;
+
+                            // Re-apply styles on load for dynamic content manipulation and theming
+                            applyIframeTheme(currentThemeIsDark);
+                            applyCodeBlockStyles(iframeDoc.documentElement);
+                            
+                            // *** Activate toggle logic based on file type ***
+                            activateNotionToggles(iframeDoc);
+                            
+                            documentFrame.onload = null;
+                        };
+                    };
+                    reader.readAsText(file);
+                }
+
+                const docName = file.name.replace(/\.[^/.]+$/, "").replace(/-\w{32}$/, "").trim();
+                backToGridBtn.title = `Back to Folders (Viewing: ${docName})`;
+            }
+            
+            // --- BACK BUTTON ACTION ---\
+            backToGridBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                showView('folder');
+                backToGridBtn.title = `Back to Folders`;
+            });
+
+            // --- ZOOM CONTROLS LOGIC ---
+            function updateZoom() {
+                documentFrame.style.transform = `scale(${currentZoomLevel})`;
+                const scaleFactor = 1 / currentZoomLevel;
+                documentFrame.style.width = `${100 * scaleFactor}%`;
+                documentFrame.style.height = `${100 * scaleFactor}%`;
+            }
+
+            zoomInBtn.addEventListener('click', () => {
+                if (currentZoomLevel < MAX_ZOOM) {
+                    currentZoomLevel = Math.min(MAX_ZOOM, currentZoomLevel + ZOOM_STEP);
+                    updateZoom();
+                }
+            });
+
+            zoomOutBtn.addEventListener('click', () => {
+                if (currentZoomLevel > MIN_ZOOM) {
+                    currentZoomLevel = Math.max(MIN_ZOOM, currentZoomLevel - ZOOM_STEP);
+                    updateZoom();
+                }
+            });
+
+            // --- FULLSCREEN LOGIC ---
+            fullscreenToggleBtn.addEventListener('click', () => {
+                const isFullScreen = body.classList.toggle('full-screen');
+                
+                if (isFullScreen) {
+                    fullscreenToggleBtn.querySelector('i').className = 'fa-solid fa-minimize';
+                } else {
+                    fullscreenToggleBtn.querySelector('i').className = 'fa-solid fa-maximize';
+                }
+            });
+            
+            // --- INITIALIZATION ---\
+            showView('loading'); 
+
+            // NEW: After file selection, prepare the asset files map
+            fileInput.addEventListener('change', (event) => {
+                const files = event.target.files;
+                if (files.length === 0) return;
+
+                documentFiles.clear();
+                folderCardGrid.innerHTML = '';
+                
+                const hierarchy = new Map();
+                let docCounter = 0;
+                let rootFolderName = 'Root Folder';
+
+                if (files.length > 0 && files[0].webkitRelativePath) {
+                     const pathParts = files[0].webkitRelativePath.split('/');
+                     rootFolderName = pathParts[0] || 'Root Folder';
+                }
+
+                // Call the new helper function to populate assets map
+                getAssetFiles(files); 
+                
+                Array.from(files).forEach(file => {
+                    const fileNameLower = file.name.toLowerCase();
+                    
+                    // MODIFIED: Accept .html, .pdf, and .md files
+                    if (fileNameLower.endsWith('.html') || fileNameLower.endsWith('.pdf') || fileNameLower.endsWith('.md')) {
+                        if (fileNameLower.includes('index.html')) {
+                            return;
+                        }
+
+                        const pathParts = file.webkitRelativePath.split('/');
+                        let cardName; 
+                        
+                        if (pathParts.length === 1) {
+                            cardName = rootFolderName;
+                        } else if (pathParts.length >= 2) {
+                            cardName = pathParts[1].replace(/-\w{32}$/, "").trim();
+                        } else {
+                             cardName = rootFolderName;
+                        }
+                        
+                        const docName = file.name.replace(/\.[^/.]+$/, "").replace(/-\w{32}$/, "").trim();
+
+                        if (fileNameLower.endsWith('.html') && docName === cardName) {
+                            return;
+                        }
+                        
+                        const docId = `doc-${Date.now()}-${docCounter++}`;
+                        
+                        let fileType;
+                        if (fileNameLower.endsWith('.pdf')) {
+                            fileType = 'pdf';
+                        } else if (fileNameLower.endsWith('.md')) {
+                            fileType = 'md'; // NEW type
+                        } else {
+                            fileType = 'html';
+                        }
+
+                        documentFiles.set(docId, {
+                            file: file,
+                            type: fileType
+                        });
+                        
+                        if (!hierarchy.has(cardName)) {
+                            hierarchy.set(cardName, []);
+                        }
+                        
+                        hierarchy.get(cardName).push({ 
+                            id: docId, 
+                            name: docName,
+                            type: fileType
+                        });
+                    }
+                });
+
+                if (documentFiles.size === 0) {
+                    rootFolderTitle.classList.add('hidden');
+                    folderCardGrid.innerHTML = `<p class="text-lg text-center col-span-full py-10" style="color: var(--danger-color);">No valid Notion HTML, PDF, or Markdown files found in the selected folder.</p>`;
+                    showView('folder');
+                    return;
+                }
+                
+                rootFolderTitle.classList.add('hidden');
+                renderFolderCards(hierarchy);
+                showView('folder');
+            });
+
+
+        });
+    </script>
+</body>
+</html>

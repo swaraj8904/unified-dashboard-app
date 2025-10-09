@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f0f3f9;
+            --card-bg: #e9ecf4;
+            --text-color: #556070;
+            --subtle-text: #6b778d;
+            --border-color: #d1d9e6;
+            --shadow-light: #ffffff;
+            --shadow-dark: #b1c1d8;
+            --primary-color: #4A90E2;
+            --primary-light: #e9f2fc;
+            --danger-color: #FF6B6B;
+            --success-color: #7ED321;
+            --info-color: #4A90E2;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a202c;
+            --card-bg: #2d3748;
+            --text-color: #edf2f7;
+            --subtle-text: #a0aec0;
+            --border-color: #4a5568;
+            --shadow-light: #444c5d;
+            --shadow-dark: #12161f;
+            --primary-color: #63b3ed;
+            --primary-light: #2c5282;
+            --danger-color: #ff8b8b;
+            --success-color: #9cd659;
+            --info-color: #63b3ed;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        #dashboard-sidebar {
+            width: 60px;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 15px 0;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        #dashboard-sidebar:hover {
+            width: 170px;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            padding: 0 10px 15px 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .logo {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-shadow: -1px -1px 2px var(--shadow-light), 1px 1px 2px var(--shadow-dark);
+        }
+        .logo .logo-icon {
+            flex-shrink: 0;
+            width: 45px;
+        }
+        .logo .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 0.2s ease, transform 0.3s ease;
+            width: 0;
+            overflow: hidden;
+        }
+        #dashboard-sidebar:hover .logo-text {
+            opacity: 1;
+            transform: translateX(0);
+            width: auto;
+        }
+        
+        #dashboard-nav { list-style: none; flex-grow: 1; padding: 0 10px; }
+        #dashboard-nav li { margin-bottom: 6px; }
+        #dashboard-nav a {
+            display: flex;
+            align-items: center;
+            color: var(--subtle-text);
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: all 0.2s;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+        #dashboard-nav a:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        #dashboard-nav a.active {
+            color: var(--primary-color);
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .nav-icon {
+            font-size: 0.85rem;
+            width: 20px;
+            text-align: center;
+            transition: margin-right 0.3s ease;
+        }
+         #dashboard-sidebar:hover .nav-icon {
+            margin-right: 15px;
+        }
+
+        .nav-text {
+            font-weight: 600;
+            font-size: 0.70rem;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: opacity 0.2s ease, transform 0.3s ease;
+            width: 0;
+            overflow: hidden;
+        }
+        #dashboard-sidebar:hover .nav-text {
+            opacity: 1;
+            transform: translateX(0);
+            width: auto;
+        }
+
+        .sidebar-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+        .footer-btn, .footer-label {
+            height: 30px; 
+            border-radius: 10px; 
+            border: none;
+            background-color: var(--card-bg); 
+            color: var(--subtle-text); 
+            font-size: 0.85rem;
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            align-self: center;
+            overflow: hidden;
+            width: 100%;
+            padding: 0;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+        #dashboard-sidebar:not(:hover) .footer-btn, #dashboard-sidebar:not(:hover) .footer-label {
+             width: 30px;
+             border-radius: 50%;
+        }
+        .footer-btn:hover, .footer-label:hover { 
+            color: var(--primary-color); 
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .footer-btn:active, .footer-label:active {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            transform: translateY(1px) scale(0.98);
+        }
+        
+        #dashboard-sidebar:hover .footer-btn, #dashboard-sidebar:hover .footer-label {
+            width: 100%;
+            justify-content: flex-start;
+            padding: 0 10px;
+            border-radius: 10px;
+        }
+        #dashboard-sidebar:hover .footer-btn .nav-icon, #dashboard-sidebar:hover .footer-label .nav-icon { margin-right: 10px; }
+
+        .content-area {
+            flex-grow: 1;
+            position: relative;
+            background-color: var(--bg-color);
+        }
+
+        .app-frame {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border: none;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+        .app-frame.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background-color: var(--card-bg); padding: 20px; border-radius: 12px;
+            width: 90%; max-width: 450px;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-header h2 { font-size: 1.3rem; }
+        .modal-close-btn { font-size: 1.3rem; background: none; border: none; color: var(--subtle-text); cursor: pointer; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 6px; }
+        .form-group input {
+            width: 100%; padding: 10px; border: none;
+            border-radius: 6px; background-color: var(--bg-color); color: var(--text-color); font-size: 0.9rem;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+        .modal-actions { margin-top: 20px; text-align: right; }
+        .action-btn {
+            padding: 8px 16px; 
+            border: none; 
+            border-radius: 8px;
+            background-color: var(--primary-color); 
+            color: white;
+            font-weight: 600; 
+            font-size: 0.85rem; 
+            cursor: pointer;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .action-btn:active {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            transform: translateY(1px) scale(0.98);
+        }
+        
+        #page-list { list-style: none; max-height: 250px; overflow-y: auto; padding-right: 8px; }
+        .page-list-item {
+            display: flex; align-items: center; 
+            background-color: var(--bg-color);
+            padding: 6px; 
+            border-radius: 6px; margin-bottom: 8px;
+            border: none;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+        .drag-handle { cursor: grab; margin-right: 10px; color: var(--subtle-text); }
+        .page-list-item span { flex-grow: 1; }
+        .delete-page-btn { 
+            background: none; border: none; color: var(--danger-color); cursor: pointer; font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .delete-page-btn:hover { color: #d63031; }
+        .page-list-item.dragging { opacity: 0.5; background-color: var(--primary-light); }
+        #reset-pages-btn {
+            display: block; width: 100%; margin-top: 15px; padding: 10px; border-radius: 8px;
+            border: none; background-color: var(--danger-color); color: white; cursor: pointer;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            transition: all 0.3s;
+        }
+        #reset-pages-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .hidden { display: none; }
+
+        .message-box {
+            position: fixed; top: 20px; right: 20px;
+            padding: 12px 20px; border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            font-weight: 600; z-index: 2000; color: white;
+            display: flex; align-items: center; gap: 8px;
+            transform: translateX(120%);
+            transition: transform 0.4s ease-in-out;
+        }
+        .message-box.show { transform: translateX(0); }
+        .message-box.success { background-color: var(--success-color); }
+        .message-box.error { background-color: var(--danger-color); }
+        .message-box.info { background-color: var(--info-color); }
+    </style>
+</head>
+<body>
+
+    <nav id="dashboard-sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fa-solid fa-layer-group logo-icon"></i>
+                <span class="logo-text">Dashboard</span>
+            </div>
+        </div>
+        <ul id="dashboard-nav"></ul>
+        <div class="sidebar-footer">
+            <button id="add-page-btn" class="footer-btn" title="Add New Page">
+                <i class="fa-solid fa-plus nav-icon"></i>
+                <span class="nav-text">Add Page</span>
+            </button>
+            <button id="settings-btn" class="footer-btn" title="Manage Pages">
+                <i class="fa-solid fa-gear nav-icon"></i>
+                <span class="nav-text">Settings</span>
+            </button>
+            <button id="full-backup-btn" class="footer-btn" title="Save Full Backup">
+                <i class="fa-solid fa-download nav-icon"></i>
+                <span class="nav-text">Full Backup</span>
+            </button>
+            <label for="full-restore-input" id="full-restore-label" class="footer-label" title="Load Full Backup">
+                <i class="fa-solid fa-upload nav-icon"></i>
+                <span class="nav-text">Full Restore</span>
+            </label>
+            <input type="file" id="full-restore-input" class="hidden" accept=".json">
+            <button id="theme-toggle" class="footer-btn" aria-label="Toggle dark mode">
+                <i class="fa-solid fa-moon nav-icon"></i>
+                <span class="nav-text">Theme</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="content-area" id="content-area"></main>
+
+    <div id="add-page-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add New Page</h2>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="add-page-form">
+                <div class="form-group">
+                    <label for="page-title-input">Page Title</label>
+                    <input type="text" id="page-title-input" placeholder="e.g., My Team Dashboard" required>
+                </div>
+                <div class="form-group">
+                    <label for="page-url-input">Page URL</label>
+                    <input type="url" id="page-url-input" placeholder="https://example.com/dashboard" required>
+                </div>
+                <div class="form-group">
+                    <label for="page-icon-input">Icon (Font Awesome)</label>
+                    <input type="text" id="page-icon-input" placeholder="e.g., fa-solid fa-chart-line">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="action-btn">Add Page</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="manage-pages-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Manage Pages</h2>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <p style="margin-bottom: 15px; color: var(--subtle-text);">Drag & drop to reorder pages.</p>
+            <ul id="page-list"></ul>
+            <button id="reset-pages-btn">Reset to Default Pages</button>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const navContainer = document.getElementById('dashboard-nav');
+        const contentArea = document.getElementById('content-area');
+        const themeToggle = document.getElementById('theme-toggle');
+        const addPageBtn = document.getElementById('add-page-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const fullBackupBtn = document.getElementById('full-backup-btn');
+        const fullRestoreInput = document.getElementById('full-restore-input');
+        const messageBox = document.getElementById('messageBox');
+        
+        const addPageModal = document.getElementById('add-page-modal');
+        const addPageForm = document.getElementById('add-page-form');
+        const pageTitleInput = document.getElementById('page-title-input');
+        const pageUrlInput = document.getElementById('page-url-input');
+        const pageIconInput = document.getElementById('page-icon-input');
+
+        const managePagesModal = document.getElementById('manage-pages-modal');
+        const pageList = document.getElementById('page-list');
+        const resetPagesBtn = document.getElementById('reset-pages-btn');
+
+
+        let pages = [];
+        let iframeReadyResolvers = new Map(); 
+        // Map to store Promise resolvers for pages completing their RESTORE operation
+        let iframeRestoreResolvers = new Map(); 
+        
+        const defaultPages = [
+            { id: 'links', title: 'LinkLaunch', file: 'links.html', icon: 'fa-link' },
+            { id: 'todo', title: 'To-Do List', file: 'todo.html', icon: 'fa-list-check' },
+            { id: 'notes', title: 'SmartNotes', file: 'notes.html', icon: 'fa-note-sticky' },
+            { id: 'password', title: 'Password Manager', file: 'password.html', icon: 'fa-lock' },
+            { id: 'notion', title: 'Notion Knowledge Base', file: 'notion notes.html', icon: 'fa-table-list' },
+            { id: 'pre-upgrade', title: 'Pre-Upgrade', file: 'pre-upgrade.html', icon: 'fa-rocket' },
+            { id: 'pre-maintenance', title: 'Pre-Maintenance', file: 'pre-maintainence.html', icon: 'fa-helmet-safety' },
+            { id: 'maintenance', title: 'Maintenance', file: 'maintainence.html', icon: 'fa-screwdriver-wrench' }
+        ];
+
+        const pageDataKeys = {
+            'pre-upgrade.html': 'preUpgradeChecklists',
+            'pre-maintainence.html': 'preMaintenanceChecklists',
+            'maintainence.html': 'MaintenanceChecklists',
+            'todo.html': ['zenithTasks', 'zenithFilters'], 
+            'links.html': ['linkLaunchData', 'linkLaunchTemplateGroups'],
+            'password.html': 'passwordManagerData',
+            'notes.html': 'smartNotes_notebooks'
+        };
+
+        const loadPages = () => {
+            const storedPages = localStorage.getItem('dashboardPages');
+            pages = storedPages ? JSON.parse(storedPages) : [...defaultPages];
+        };
+
+        const savePages = () => {
+            localStorage.setItem('dashboardPages', JSON.stringify(pages));
+        };
+
+        const renderDashboard = () => {
+            iframeReadyResolvers.clear();
+            navContainer.innerHTML = '';
+            contentArea.innerHTML = '';
+            if (pages.length === 0) return;
+
+            pages.forEach(page => {
+                const li = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = '#';
+                link.dataset.page = page.file;
+                link.title = page.title;
+                link.innerHTML = `<i class="fa-solid fa-fw ${page.icon} nav-icon"></i><span class="nav-text">${page.title}</span>`;
+                li.appendChild(link);
+                navContainer.appendChild(li);
+                
+                const readyPromise = new Promise(resolve => {
+                    iframeReadyResolvers.set(page.file, resolve);
+                });
+                readyPromise.then(() => {
+                    iframeReadyResolvers.delete(page.file); 
+                });
+
+                const iframe = document.createElement('iframe');
+                iframe.id = `frame-${page.file}`;
+                iframe.className = 'app-frame';
+                iframe.src = page.file;
+                contentArea.appendChild(iframe);
+            });
+            
+            addNavListeners();
+            applyCurrentThemeToFrames();
+        };
+        
+        const setActivePage = (pageFile) => {
+            if (!pageFile && pages.length > 0) pageFile = pages[0].file;
+            if (!pageFile) return;
+            document.querySelectorAll('#dashboard-nav a').forEach(link => link.classList.toggle('active', link.dataset.page === pageFile));
+            document.querySelectorAll('.app-frame').forEach(frame => frame.classList.toggle('active', frame.id === `frame-${pageFile}`));
+            localStorage.setItem('dashboard-activePage', pageFile);
+        };
+
+        function addNavListeners() {
+            document.querySelectorAll('#dashboard-nav a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    setActivePage(link.dataset.page);
+                });
+            });
+        }
+        
+        const applyCurrentThemeToFrames = () => {
+            const isDark = document.body.classList.contains('dark-mode');
+            document.querySelectorAll('.app-frame').forEach(frame => {
+                frame.onload = () => {
+                    try {
+                       frame.contentWindow.postMessage({ action: 'setTheme', theme: isDark ? 'dark' : 'light' }, '*');
+                    } catch(e) { console.warn("Could not apply theme to iframe:", frame.src); }
+                };
+                if (frame.contentDocument && frame.contentDocument.readyState === 'complete') {
+                    frame.onload();
+                }
+            });
+        };
+
+        const toggleTheme = () => {
+            const newTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+            document.body.classList.toggle('dark-mode');
+            themeToggle.innerHTML = newTheme === 'dark' ? 
+                '<i class="fa-solid fa-sun nav-icon"></i><span class="nav-text">Theme</span>' : 
+                '<i class="fa-solid fa-moon nav-icon"></i><span class="nav-text">Theme</span>';
+            localStorage.setItem('dashboard-theme', newTheme);
+            applyCurrentThemeToFrames();
+        };
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // --- PAGE MANAGEMENT MODAL ---
+        addPageBtn.addEventListener('click', () => {
+            addPageForm.reset();
+            addPageModal.classList.add('active');
+        });
+
+        addPageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newPage = {
+                id: `custom-${Date.now()}`,
+                title: pageTitleInput.value,
+                file: pageUrlInput.value,
+                icon: pageIconInput.value || 'fa-solid fa-link'
+            };
+            pages.push(newPage);
+            savePages();
+            renderDashboard();
+            setActivePage(newPage.file);
+            closeModal(addPageModal);
+        });
+
+        settingsBtn.addEventListener('click', () => {
+            renderPageList();
+            managePagesModal.classList.add('active');
+        });
+
+        const renderPageList = () => {
+            pageList.innerHTML = '';
+            pages.forEach(page => {
+                const li = document.createElement('li');
+                li.className = 'page-list-item';
+                li.dataset.pageId = page.id;
+                li.innerHTML = `
+                    <i class="fa-solid fa-grip-lines drag-handle"></i>
+                    <i class="fa-solid fa-fw ${page.icon}" style="margin-right: 15px;"></i>
+                    <span>${page.title}</span>
+                    <button class="delete-page-btn" data-page-id="${page.id}" title="Delete Page">&times;</button>
+                `;
+                pageList.appendChild(li);
+            });
+            addPageListListeners();
+        };
+
+        const addPageListListeners = () => {
+            pageList.querySelectorAll('.delete-page-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const pageId = e.target.dataset.pageId;
+                    pages = pages.filter(p => p.id !== pageId);
+                    savePages();
+                    renderDashboard();
+                    renderPageList();
+                    if(pages.length > 0) setActivePage(pages[0].file);
+                });
+            });
+            
+            new Sortable(pageList, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'dragging',
+                onEnd: (evt) => {
+                    const movedItem = pages.splice(evt.oldIndex, 1)[0];
+                    pages.splice(evt.newIndex, 0, movedItem);
+                    savePages();
+                    renderDashboard();
+                    setActivePage(pages[evt.newIndex].file);
+                }
+            });
+        };
+        
+        resetPagesBtn.addEventListener('click', () => {
+            pages = [...defaultPages];
+            savePages();
+            renderDashboard();
+            closeModal(managePagesModal);
+            setActivePage(pages[0].file);
+            showMessage("Pages reset to default!", "success");
+        });
+
+        const closeModal = (modal) => {
+            modal.classList.remove('active');
+        };
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', e => {
+                if (e.target === overlay) closeModal(overlay);
+            });
+        });
+        document.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                closeModal(e.target.closest('.modal-overlay'));
+            });
+        });
+
+        // --- CLOUD SYNC CONFIG & LOGIC (Google Sheets) ---
+        // !!! IMPORTANT: Replace 'YOUR_WEB_APP_URL' with the Web App URL from Google Apps Script !!!
+        const CLOUD_ENDPOINT = 'https://script.google.com/macros/s/AKfycbz03k7xSj1C1hBfGZCJivs3djP4fc5uVrNaqm5NN7A5Yaalm9Ad7a9zEDJrv-E5FxpkAQ/exec'; 
+        let autoSaveDirty = false;
+        let autoSaveTimer = null;
+        const AUTO_SAVE_INTERVAL = 5000; // 5 seconds of inactivity
+
+        function startAutoSaveMonitor() {
+            if (autoSaveTimer) clearInterval(autoSaveTimer);
+            autoSaveTimer = setInterval(triggerCloudSave, AUTO_SAVE_INTERVAL);
+        }
+
+        async function cloudLoad() {
+            try {
+                const response = await fetch(CLOUD_ENDPOINT, { method: 'GET' });
+                const result = await response.json();
+                if (result.status === 'success' && result.data) {
+                    return JSON.parse(result.data);
+                } else {
+                    return null; 
+                }
+            } catch (error) {
+                console.error("Cloud Load Error:", error);
+                return null; 
+            }
+        }
+
+        async function cloudSave(data) {
+            if (!data) return; 
+            
+            const dataToUpload = JSON.stringify(data);
+
+            try {
+                const response = await fetch(CLOUD_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' }, 
+                    body: JSON.stringify({ data: dataToUpload })
+                });
+                if (response.ok) {
+                    showMessage("Cloud sync complete!", "success");
+                    autoSaveDirty = false;
+                } else {
+                    throw new Error("Cloud save failed.");
+                }
+            } catch (error) {
+                console.error("Cloud Save Error:", error);
+                showMessage("Cloud sync failed. Data is local only.", "error");
+            }
+        }
+
+        function triggerCloudSave() {
+            if (!autoSaveDirty) return;
+            
+            getBackupData().then(data => {
+                // Ensure we don't try to save pages array from the iframes, only from the host.
+                delete data.dashboardPages; 
+                cloudSave(data);
+            });
+        }
+        // --- END CLOUD SYNC LOGIC ---
+
+        window.addEventListener('message', (event) => {
+            if (event.data) {
+                // 1. Handle Page Readiness Signal
+                if (event.data.action === 'pageReady') {
+                    const resolver = iframeReadyResolvers.get(event.data.file);
+                    if (resolver) {
+                        resolver();
+                    }
+                }
+                
+                // 2. Handle Restore Completion Signal
+                if (event.data.action === 'restoreComplete') {
+                    const resolver = iframeRestoreResolvers.get(event.data.file);
+                    if (resolver) {
+                        resolver(); 
+                    }
+                }
+                
+                // 3. Handle Auto-Save Signal from iframes
+                if (event.data.action === 'dataUpdated') {
+                    autoSaveDirty = true; 
+                }
+            }
+        });
+        
+        function showMessage(message, type = 'info') {
+            const iconClass = { info: 'fa-solid fa-circle-info', success: 'fa-solid fa-check-circle', error: 'fa-solid fa-triangle-exclamation' }[type];
+            messageBox.innerHTML = `<i class="${iconClass}"></i> ${message}`;
+            messageBox.className = `message-box ${type}`;
+            setTimeout(() => { messageBox.classList.add('show'); }, 10);
+            setTimeout(() => { messageBox.classList.remove('show'); }, 3000);
+        }
+
+        async function getBackupData() {
+            const backupData = { dashboardPages: pages };
+            const iframes = Array.from(document.querySelectorAll('.app-frame'));
+
+            const backupPromises = iframes.map(frame => {
+                const pageFile = new URL(frame.src).pathname.split('/').pop();
+                const dataKeys = pageDataKeys[pageFile];
+                
+                if (!dataKeys) {
+                    return Promise.resolve(null);
+                }
+
+                return new Promise((resolve) => {
+                    const timeout = setTimeout(() => {
+                        console.warn(`Backup for ${pageFile} timed out.`);
+                        window.removeEventListener('message', messageListener);
+                        resolve(null);
+                    }, 5000); 
+
+                    const messageListener = (event) => {
+                        if (event.source === frame.contentWindow && event.data && event.data.action === 'backupDataResponse') {
+                            clearTimeout(timeout);
+                            window.removeEventListener('message', messageListener);
+                            resolve(event.data);
+                        }
+                    };
+                    window.addEventListener('message', messageListener);
+
+                    try {
+                        frame.contentWindow.postMessage({ action: 'getDataForBackup' }, '*');
+                    } catch (e) {
+                        console.error("Could not send message to iframe:", frame.src, e);
+                        clearTimeout(timeout);
+                        window.removeEventListener('message', messageListener);
+                        resolve(null);
+                    }
+                });
+            });
+
+            const results = await Promise.all(backupPromises);
+            
+            results.forEach(result => {
+                if (result && result.key) {
+                    if (Array.isArray(result.key)) {
+                        result.key.forEach((k, i) => { backupData[k] = result.value[i]; });
+                    } else {
+                        backupData[result.key] = result.value;
+                    }
+                }
+            });
+
+            return backupData;
+        }
+        
+        // Extracted and modified restore logic from the old file restore process.
+        async function performIframeRestore(sourceData) {
+            // 1. Update host pages and re-render structure
+            pages = sourceData.dashboardPages;
+            savePages(); 
+
+            contentArea.innerHTML = '';
+            renderDashboard();
+            
+            const allIframes = Array.from(document.querySelectorAll('.app-frame'));
+            const pageDataKeysList = Object.keys(pageDataKeys);
+            
+            const restoreTargets = allIframes.filter(frame => {
+                const pageFile = new URL(frame.src).pathname.split('/').pop();
+                return pageDataKeysList.includes(pageFile);
+            });
+            
+            // 2. Wait for ALL target iframes to signal pageReady
+            const readinessPromises = restoreTargets.map(frame => {
+                const pageFile = new URL(frame.src).pathname.split('/').pop();
+                return new Promise((resolve) => {
+                    iframeReadyResolvers.set(pageFile, resolve);
+                });
+            });
+            
+            await Promise.all(readinessPromises);
+            
+            // 3. Dispatch the restore data
+            const restorePromises = [];
+            
+            restoreTargets.forEach(frame => {
+               const pageFile = new URL(frame.src).pathname.split('/').pop();
+               const dataKeys = pageDataKeys[pageFile];
+               
+               restorePromises.push(new Promise((resolve) => {
+                   iframeRestoreResolvers.set(pageFile, resolve);
+               }));
+
+               if (!Array.isArray(dataKeys)) {
+                   const key = dataKeys;
+                   const value = sourceData[key];
+                   frame.contentWindow.postMessage({ action: 'restoreData', key: key, value: value }, '*');
+               } else { 
+                   const keys = dataKeys;
+                   const values = dataKeys.map(key => sourceData[key]);
+                   frame.contentWindow.postMessage({ action: 'restoreData', key: keys, value: values }, '*');
+               }
+            });
+            
+            await Promise.race([
+                Promise.all(restorePromises),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Restore synchronization timeout')), 10000))
+            ]);
+            
+            if(pages.length > 0) setActivePage(pages[0].file);
+            showMessage("All pages synchronized successfully! 🎉", "success");
+        }
+
+
+        // --- Manual Cloud Save (Backup Button Repurpose) ---
+        fullBackupBtn.addEventListener('click', async () => {
+            const originalText = fullBackupBtn.innerHTML;
+            fullBackupBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin nav-icon"></i><span class="nav-text">Syncing...</span>';
+            fullBackupBtn.disabled = true;
+
+            try {
+                const backupData = await getBackupData();
+                
+                // Perform a manual cloud save as well as the local file save
+                await cloudSave(backupData); 
+
+                // --- Original Local File Download Logic ---
+                const dataStr = JSON.stringify(backupData, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'dashboard-full-backup.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showMessage("Cloud and local backup complete!", "success");
+                // --- End Original Local File Download Logic ---
+
+            } catch (error) {
+                showMessage("Manual sync failed.", "error");
+                console.error("Manual Sync Error:", error);
+            } finally {
+                fullBackupBtn.innerHTML = originalText;
+                fullBackupBtn.disabled = false;
+            }
+        });
+        
+        // --- Manual Local File Restore (Existing Restore Logic) ---
+        fullRestoreInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.dashboardPages) throw new Error("Invalid backup file.");
+                    
+                    await performIframeRestore(data);
+                    showMessage("Dashboard restored from local file. 🎉", "success");
+
+                } catch (err) {
+                    const message = err.message.includes('timeout') ? "Restore timed out. Some pages may not have fully restored." : "Error restoring backup. Invalid file or internal error.";
+                    showMessage(message, "error");
+                    console.error("Dashboard Restore Error:", err);
+                } finally {
+                    event.target.value = null;
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // --- Initialization (Cloud First) ---
+        async function init() {
+            loadPages();
+            
+            const cloudData = await cloudLoad();
+
+            if (cloudData && Object.keys(cloudData).length > 0) {
+                try {
+                    // Cloud data found: trigger full restore process
+                    await performIframeRestore(cloudData);
+                } catch(e) {
+                    showMessage("Error synchronizing cloud data. Loading local version.", "error");
+                }
+            }
+            
+            // Load local storage content and theme, regardless of cloud status
+            renderDashboard();
+            
+            const savedPage = localStorage.getItem('dashboard-activePage');
+            const pageExists = pages.some(p => p.file === savedPage);
+            setActivePage(pageExists ? savedPage : (pages[0]?.file || null));
+            
+            const savedTheme = localStorage.getItem('dashboard-theme') || 'light';
+            if (savedTheme === 'dark') document.body.classList.add('dark-mode');
+            themeToggle.innerHTML = savedTheme === 'dark' ? 
+                '<i class="fa-solid fa-sun nav-icon"></i><span class="nav-text">Theme</span>' : 
+                '<i class="fa-solid fa-moon nav-icon"></i><span class="nav-text">Theme</span>';
+
+            startAutoSaveMonitor();
+        }
+
+        init();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance | Your Personal Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #f0f3f9;
+            --card-bg: #e9ecf4;
+            --table-row-odd: #f8fafc;
+            --text-color: #556070;
+            --subtle-text: #6b778d;
+            --border-color: #d1d9e6;
+            --shadow-light: #ffffff;
+            --shadow-dark: #b1c1d8;
+            
+            --primary-color: #4A90E2;
+            --primary-light: #e9f2fc;
+            --accent-color: #50E3C2;
+            --star-color: #FFD23F;
+            --success-color: #7ED321;
+            --danger-color: #FF6B6B;
+            --info-color: #4A90E2;
+
+            --status-pending: #d4aa00;
+            --status-yes: #5edb7d;
+            --status-no: #fa7272;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a202c;
+            --card-bg: #2d3748;
+            --table-row-odd: #212c3b;
+            --text-color: #edf2f7;
+            --subtle-text: #a0aec0;
+            --border-color: #4a5568;
+            --shadow-light: #444c5d;
+            --shadow-dark: #12161f;
+            
+            --primary-color: #63b3ed;
+            --primary-light: #2c5282;
+            --success-color: #9cd659;
+            --danger-color: #ff8b8b;
+            --info-color: #63b3ed;
+            
+            --status-pending: #b38e00;
+            --status-yes: #1f7d3a;
+            --status-no: #af3131;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 15px auto 0;
+        }
+
+        /* --- Header --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-color);
+            text-shadow: 
+                -1px -1px 2px var(--shadow-light),
+                1px 1px 2px var(--shadow-dark);
+        }
+        body.dark-mode header h1 {
+            color: var(--text-color);
+            text-shadow: 
+                -1px -1px 2px var(--shadow-light),
+                1px 1px 2px var(--shadow-dark);
+        }
+        
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+
+        .neumorphic-icon-btn {
+            background-color: var(--card-bg);
+            border: none;
+            color: var(--subtle-text);
+            font-size: 1.1rem;
+            cursor: pointer; 
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .neumorphic-icon-btn:hover {
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+        }
+        .neumorphic-icon-btn:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(2px) scale(0.98);
+        }
+
+        .neumorphic-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--card-bg);
+            color: var(--subtle-text);
+        }
+        .neumorphic-btn:hover {
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+        }
+
+        .neumorphic-btn:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(2px) scale(0.98);
+        }
+
+        .neumorphic-btn.primary {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .neumorphic-btn.danger {
+            background-color: var(--danger-color);
+            color: white;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .neumorphic-btn.info {
+            background-color: var(--info-color);
+            color: white;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .neumorphic-btn.warning {
+            background-color: var(--star-color);
+            color: var(--text-color);
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .neumorphic-btn.success {
+            background-color: var(--success-color);
+            color: white;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .neumorphic-btn.primary:hover, .neumorphic-btn.danger:hover, .neumorphic-btn.info:hover, .neumorphic-btn.success:hover, .neumorphic-btn.warning:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .neumorphic-btn.primary:active, .neumorphic-btn.danger:active, .neumorphic-btn.info:active, .neumorphic-btn.success:active, .neumorphic-btn.warning:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(2px) scale(0.98);
+        }
+
+
+        .neumorphic-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            transform: none;
+        }
+
+        .app-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+            transition: box-shadow 0.3s;
+            margin-bottom: 25px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--subtle-text);
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            box-shadow: inset 0 0 0 2px var(--primary-color), inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
+        
+        /* New and improved styling for filter inputs */
+        .filter-container input, .filter-container select {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            transition: box-shadow 0.2s;
+        }
+        .filter-container input:focus, .filter-container select:focus {
+            outline: none;
+            box-shadow: inset 0 0 0 2px var(--primary-color), inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+        .filter-container select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236b778d' width='18px' height='18px'/%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 18px;
+            padding-right: 30px;
+            font-weight: 500;
+        }
+
+        #report-customization {
+            /* Styles to make the report customization section more compact */
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            background-color: var(--card-bg);
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+
+        #report-customization h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+        
+        .report-header-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px 15px; /* Reduced gap */
+        }
+        
+        .report-header-fields .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Reduced gap */
+        }
+
+        .report-header-fields .field-group input[type="text"] {
+            font-size: 0.8rem; /* Smaller font size */
+            padding: 8px; /* Reduced padding */
+        }
+
+        .report-header-fields .field-group input[type="checkbox"] {
+            width: 16px; /* Smaller checkbox */
+            height: 16px;
+        }
+        
+        .report-header-fields .field-group input[type="checkbox"]:checked::before {
+            font-size: 10px;
+        }
+
+        #report-customization label {
+            font-size: 0.8rem; /* Smaller label font size */
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+
+        .column-selection-section {
+            margin-top: 20px;
+        }
+
+        .column-selection-section h3 {
+             font-size: 1rem;
+             margin-bottom: 10px;
+        }
+
+        .column-select-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px; /* Reduced gap */
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .column-select-list li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+        
+        .column-select-list li input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+        }
+
+        .column-select-list li input[type="checkbox"]:checked::before {
+            font-size: 10px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+            border: 1px solid var(--border-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            user-select: none;
+            background-color: var(--card-bg);
+        }
+        
+        thead {
+            display: table-header-group;
+        }
+
+        th, td {
+            padding: 20px; /* Increased padding for more vertical space */
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            vertical-align: top;
+            background-color: transparent;
+        }
+        th:last-child, td:last-child {
+            border-right: none;
+        }
+        
+        tbody tr:nth-child(odd) {
+            background-color: var(--bg-color);
+        }
+        tbody tr:nth-child(even) {
+            background-color: var(--card-bg);
+        }
+        
+        tr:hover {
+            background-color: var(--primary-light);
+        }
+        
+        /* New lighter background colors */
+        tr.status-Pending { background-color: #fcf6e7 !important; }
+        body.dark-mode tr.status-Pending { background-color: #2e2612 !important; }
+
+        tr.status-Yes { background-color: #f0f7f3 !important; }
+        body.dark-mode tr.status-Yes { background-color: #1a2a1f !important; }
+
+        tr.status-No { background-color: #f7e6e6 !important; }
+        body.dark-mode tr.status-No { background-color: #2c1a1a !important; }
+
+        th {
+            background-color: var(--card-bg);
+            font-weight: 600;
+            color: var(--primary-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+            transition: background-color 0.3s ease;
+            position: relative;
+        }
+        
+        th.draggable {
+            cursor: grab;
+        }
+        th.dragging {
+            cursor: grabbing;
+            opacity: 0.7;
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        th:first-child {
+            border-top-left-radius: 15px;
+        }
+        th:last-child {
+            border-top-right-radius: 15px;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        td.checklist-name-cell[contenteditable="true"] {
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+            outline: none;
+            background-color: var(--card-bg);
+            padding: 14px 18px;
+            min-width: 180px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+        td.checklist-name-cell[contenteditable="true"]:focus {
+            box-shadow: inset 0 0 0 2px var(--primary-color), inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
+        td.checklist-name-cell.readonly-cell {
+            color: var(--text-color);
+            background-color: transparent;
+            border: none;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            padding: 16px 20px;
+        }
+
+        td.editable-checkbox-cell {
+            position: relative;
+            width: 50px;
+            padding-left: 15px;
+            text-align: center;
+        }
+        
+        .data-block-cell {
+            padding: 0;
+        }
+        
+        .data-field-container {
+            position: relative;
+            height: 100%;
+            padding: 16px 20px;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .data-field-container.readonly {
+            background-color: transparent;
+            border-color: transparent;
+            box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+        }
+
+        .data-field-wrapper {
+            width: 100%;
+            min-height: 80px;
+            height: 120px;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: var(--text-color);
+            line-height: 1.4;
+            resize: none;
+            overflow-y: auto;
+        }
+        
+        .data-field-wrapper.readonly {
+            cursor: default;
+            resize: none;
+        }
+        
+        .copy-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 6px 10px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease, background-color 0.3s ease;
+            z-index: 20;
+            color: var(--subtle-text);
+        }
+
+        .data-field-container:hover .copy-button {
+            opacity: 1;
+        }
+        
+        .copy-button:hover {
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+        }
+        
+        .copy-button.copied {
+            background-color: var(--success-color);
+            color: white;
+            opacity: 1;
+        }
+        
+        /* New custom dropdown styling */
+        .custom-dropdown-container {
+            position: relative;
+            display: inline-block;
+            min-width: 100px;
+            text-align: center;
+        }
+        /* Fix for the dropdown getting hidden */
+        .custom-dropdown-container.show {
+            z-index: 1000;
+        }
+
+        .custom-dropdown-button {
+            padding: 6px 12px;
+            border-radius: 8px; /* Changed from 20px */
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+            background-color: var(--card-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            position: relative;
+        }
+        /* Status text colors on the main button */
+        .custom-dropdown-button.pending { color: var(--status-pending); }
+        .custom-dropdown-button.yes { color: var(--success-color); }
+        .custom-dropdown-button.no { color: var(--danger-color); }
+        
+        .custom-dropdown-button:hover {
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+        }
+        .custom-dropdown-button.active {
+            box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+        }
+        .custom-dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% + 5px);
+            background-color: transparent;
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: none; /* Removed box shadow to eliminate the outer box */
+            z-index: 100;
+            display: none;
+            text-align: center;
+            list-style: none;
+            margin-top: 5px;
+        }
+        .custom-dropdown-options.show {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 5px;
+        }
+        .custom-dropdown-option {
+            padding: 6px 10px;
+            border-radius: 8px; /* Square buttons with soft corners */
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8em;
+            transition: all 0.2s ease;
+            color: var(--subtle-text);
+            background-color: var(--card-bg);
+            box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+        }
+        .custom-dropdown-option:last-child {
+            margin-bottom: 0;
+        }
+        /* Text colors for the options in the dropdown list */
+        .custom-dropdown-option.pending { color: var(--status-pending); }
+        .custom-dropdown-option.yes { color: var(--success-color); }
+        .custom-dropdown-option.no { color: var(--danger-color); }
+        
+        .custom-dropdown-option:hover {
+            color: var(--primary-color);
+            background-color: var(--bg-color); /* Light hover effect for options */
+            box-shadow: inset 1px 1px 3px var(--shadow-dark), inset -1px -1px 3px var(--shadow-light);
+        }
+        
+        .hidden { display: none !important; }
+        .hidden-in-view-mode { display: none !important; }
+        
+        /* New rule to hide arrow buttons */
+        .hide-arrows .move-controls button {
+            display: none;
+        }
+
+        #checklistTable {
+            table-layout: fixed;
+        }
+        #checklistTable thead {
+            border-bottom: none;
+        }
+
+        #checklistTable thead th:nth-child(1),
+        #checklistTable tbody td:nth-child(1) { width: 5%; text-align: center; }
+        #checklistTable thead th:nth-child(2),
+        #checklistTable tbody td:nth-child(2) { width: 5%; text-align: center; }
+        #checklistTable thead th:nth-child(3),
+        #checklistTable tbody td:nth-child(3) { width: 30%; }
+        #checklistTable thead th:nth-child(4),
+        #checklistTable tbody td:nth-child(4) { width: 15%; }
+        #checklistTable thead th:nth-child(5),
+        #checklistTable tbody td:nth-child(5) { width: 45%; }
+        
+        .no-checklists-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--subtle-text);
+            font-size: 1.1rem;
+        }
+
+        /* --- Export Styles --- */
+        .export-table-wrapper {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px var(--shadow-dark);
+            margin-top: 20px;
+            background-color: var(--card-bg);
+        }
+
+        .export-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .export-table th, .export-table td {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 13px;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .export-table th:last-child, .export-table td:last-child {
+            border-right: none;
+        }
+
+        .export-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .export-table-header {
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .export-table-header th {
+            padding: 14px 15px;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        /* Match status colors to the main UI for consistency */
+        .export-table tr.status-Pending td { background-color: #fcf6e7 !important; }
+        .export-table tr.status-Yes td { background-color: #f0f7f3 !important; }
+        .export-table tr.status-No td { background-color: #f7e6e6 !important; }
+        
+        .message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px var(--shadow-dark);
+            font-weight: 600;
+            z-index: 2000;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(120%);
+            transition: transform 0.4s ease-in-out;
+        }
+        .message-box.show {
+            transform: translateX(0);
+        }
+        .message-box.success { background-color: var(--success-color); }
+        .message-box.error { background-color: var(--danger-color); }
+        .message-box.info { background-color: var(--info-color); }
+        
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+        }
+        .sortable-header .sort-icon {
+            font-size: 0.8em;
+            color: var(--subtle-text);
+            transition: color 0.2s ease;
+        }
+        .sortable-header.asc .sort-icon .fa-sort-up {
+            color: var(--primary-color);
+        }
+        .sortable-header.desc .sort-icon .fa-sort-down {
+            color: var(--primary-color);
+        }
+        .sortable-header:hover .sort-icon {
+            color: var(--text-color);
+        }
+
+        .filter-container {
+            padding-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+        }
+
+        .filter-container input, .filter-container select {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 14px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transition: all 0.2s ease;
+        }
+        .filter-container input:focus, .filter-container select:focus {
+            outline: none;
+            box-shadow: inset 0 0 0 2px var(--primary-color), inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
+
+        .move-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        /* Updated styles for smaller, 3D buttons */
+        .move-controls button {
+            background-color: var(--card-bg);
+            border: none;
+            color: var(--subtle-text);
+            font-size: 0.9em; /* Smaller font size */
+            cursor: pointer;
+            width: 25px; /* Smaller button size */
+            height: 25px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light); /* Smaller shadow */
+        }
+        .move-controls button:hover:not(:disabled) {
+            color: var(--primary-color);
+            transform: translateY(-1px);
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+        }
+        .move-controls button:active:not(:disabled) {
+            box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+            transform: translateY(1px) scale(0.95);
+        }
+        .move-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        /* Updated styles for add/delete buttons */
+        .add-row-btn, .delete-row-btn {
+            font-size: 0.9em;
+            padding: 5px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+            background-color: var(--card-bg);
+            color: var(--subtle-text);
+            transition: all 0.2s;
+        }
+        
+        .add-row-btn:hover {
+            color: var(--primary-color);
+            transform: scale(1.1);
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+        }
+        .add-row-btn:active {
+            box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+            transform: scale(0.95);
+        }
+
+        .delete-row-btn:hover {
+            color: var(--danger-color);
+            transform: scale(1.1);
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+        }
+        .delete-row-btn:active {
+            box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+            transform: scale(0.95);
+        }
+
+        /* Drag and Drop styles for rows */
+        .drag-handle {
+            cursor: grab;
+            padding: 5px; /* Smaller padding */
+            color: var(--subtle-text);
+            font-size: 1.1em; /* Smaller icon size */
+            transition: color 0.2s;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background-color: var(--card-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+        }
+        
+        .drag-handle:hover {
+            color: var(--primary-color);
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+        }
+
+        .dragging-row {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-left">
+                <h1>Maintenance</h1>
+            </div>
+            <div class="header-actions">
+                <button id="addChecklistBtn" class="neumorphic-btn primary hidden-in-view-mode" aria-label="Add Checklist"><i class="fas fa-plus-circle"></i></button>
+                <button id="deleteSelectedBtn" class="neumorphic-btn danger hidden-in-view-mode" disabled aria-label="Delete Selected"><i class="fas fa-trash-alt"></i></button>
+                <button id="modifySaveBtn" class="neumorphic-btn info" aria-label="Modify Checklist"><i class="fas fa-edit"></i></button>
+                <button id="resetAllBtn" class="neumorphic-btn warning" aria-label="Reset All Statuses"><i class="fas fa-sync-alt"></i></button>
+                <button id="saveToFileBtn" class="neumorphic-icon-btn" title="Save Backup to File"><i class="fa-solid fa-download"></i></button>
+                <label id="loadFromFileLabel" for="loadFileInput" class="neumorphic-icon-btn" title="Load Backup from File"><i class="fa-solid fa-upload"></i></label>
+                <input type="file" id="loadFileInput" accept=".json" class="hidden">
+                <button id="downloadPdfBtn" class="neumorphic-icon-btn" aria-label="Download PDF Report"><i class="fas fa-file-pdf"></i></button>
+                <button id="downloadImageBtn" class="neumorphic-icon-btn" aria-label="Download Image Report"><i class="fas fa-image"></i></button>
+                <button id="themeToggleBtn" class="neumorphic-icon-btn" aria-label="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+    
+        <main class="app-card">
+            <div id="report-customization" class="form-group">
+                <h3>Report Details</h3>
+                <div class="report-header-fields">
+                    <div class="field-group">
+                        <input type="checkbox" id="addQuicklookId" data-label="Quicklook ID" checked>
+                        <label for="quicklookIdInput">Quicklook ID</label>
+                        <input type="text" id="quicklookIdInput" placeholder="Enter ID">
+                    </div>
+                    <div class="field-group">
+                        <input type="checkbox" id="addSiteId" data-label="Site ID" checked>
+                        <label for="siteIdInput">Site ID</label>
+                        <input type="text" id="siteIdInput" placeholder="Enter ID">
+                    </div>
+                    <div class="field-group">
+                        <input type="checkbox" id="addChangeNo" data-label="Change No" checked>
+                        <label for="changeNoInput">Change No</label>
+                        <input type="text" id="changeNoInput" placeholder="Enter No">
+                    </div>
+                    <div class="field-group">
+                        <input type="checkbox" id="addCustomer" data-label="Customer" checked>
+                        <label for="customerInput">Customer</label>
+                        <input type="text" id="customerInput" placeholder="Enter name">
+                    </div>
+                </div>
+                
+                <div class="column-selection-section">
+                    <h3>Select Columns for Download</h3>
+                    <ul id="columnSelectOptions" class="column-select-list">
+                        <li>
+                            <input type="checkbox" id="selectColName" data-column="name" data-label="Check List" checked>
+                            <label for="selectColName">Check List</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="selectColStatus" data-column="status" data-label="Status" checked>
+                            <label for="selectColStatus">Status</label>
+                        </li>
+                        <li>
+                            <input type="checkbox" id="selectColData" data-column="data" data-label="Data" checked>
+                            <label for="selectColData">Data</label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+    
+            <div class="table-wrapper">
+                <table id="checklistTable">
+                    <thead>
+                        <tr>
+                            <th class="hidden-in-view-mode" data-column="select-checkbox" data-label="Select">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                            </th>
+                            <th class="hidden-in-view-mode" data-column="move-buttons" data-label="Move"></th>
+                            <th class="draggable" data-column="name" data-label="Check List">
+                                <div class="sortable-header" data-column="name" data-type="string">
+                                    <span>Check List</span>
+                                    <span class="sort-icon">
+                                        <i class="fas fa-sort-up"></i>
+                                        <i class="fas fa-sort-down"></i>
+                                    </span>
+                                </div>
+                                <div class="filter-container">
+                                    <input type="text" id="filter-name" placeholder="Filter by name...">
+                                </div>
+                            </th>
+                            <th class="draggable" data-column="status" data-label="Status">
+                                <div class="sortable-header" data-column="status" data-type="string">
+                                    <span>Status</span>
+                                    <span class="sort-icon">
+                                        <i class="fas fa-sort-up"></i>
+                                        <i class="fas fa-sort-down"></i>
+                                    </span>
+                                </div>
+                                <div class="filter-container">
+                                    <select id="filter-status">
+                                        <option value="">All</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Yes">Yes</option>
+                                        <option value="No">No</option>
+                                    </select>
+                                </div>
+                            </th>
+                            <th class="draggable" data-column="data" data-label="Data">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <div id="noChecklistsMessage" class="no-checklists-message">
+                    <i class="fas fa-info-circle" style="margin-right: 10px; color: var(--primary-color);"></i>
+                    No checklists added yet. Click "Modify" then "Add" to get started!
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div id="messageBox" class="message-box"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // --- DASHBOARD COMMUNICATION SCRIPT (UPDATED) ---
+        // CRITICAL: Updated key name to match the dashboard's expectation for this file
+        const pageLocalStorageKey = 'MaintenanceChecklists';
+        const themeKey = 'app-theme';
+
+        window.addEventListener('message', (event) => {
+            const { action, keys, values, theme } = event.data;
+
+            if (action === 'getDataForBackup') {
+                const data = localStorage.getItem(pageLocalStorageKey) || '[]';
+                window.parent.postMessage({
+                    action: 'backupDataResponse',
+                    key: pageLocalStorageKey,
+                    value: data
+                }, '*');
+            }
+            
+            // 🚨 CRITICAL FIX for Dashboard Restore 🚨
+            if (action === 'restoreData') {
+                // Check if the expected array keys and values are present
+                if (keys && values && Array.isArray(keys) && keys.length === values.length) {
+                    const keyIndex = keys.indexOf(pageLocalStorageKey);
+                    // Use null for missing data rather than undefined, which will be checked below
+                    const incomingData = (keyIndex !== -1 && values[keyIndex] !== undefined) ? values[keyIndex] : null; 
+
+                    // --- CRITICAL NULL CHECK ---
+                    if (incomingData !== null) { 
+                        try {
+                            // Only update storage if data was actually found in the backup
+                            localStorage.setItem(pageLocalStorageKey, incomingData);
+                            
+                            // Signal completion *before* reload for dashboard synchronization.
+                            window.parent.postMessage({ action: 'restoreComplete', file: 'maintainence.html' }, '*');
+                            
+                            // Force a reload to pick up the new data from localStorage.
+                            setTimeout(() => location.reload(), 500); 
+                            
+                            showMessage("Checklist data restored. Reloading...", "success");
+
+                        } catch (e) {
+                            console.error("Error restoring data in maintainence.html:", e);
+                            showMessage("Restore failed: Invalid data format.", "error");
+                            window.parent.postMessage({ action: 'restoreComplete', file: 'maintainence.html' }, '*');
+                        }
+                    } else {
+                         // Data was null/missing in the backup, so we only signal completion (do not clear local data)
+                        window.parent.postMessage({ action: 'restoreComplete', file: 'maintainence.html' }, '*');
+                    }
+                } else {
+                     // If keys/values are mismatched, signal completion
+                    window.parent.postMessage({ action: 'restoreComplete', file: 'maintainence.html' }, '*');
+                }
+            }
+            
+            if (action === 'setTheme') {
+                document.body.classList.toggle('dark-mode', theme === 'dark');
+                const themeToggleBtn = document.getElementById('themeToggleBtn');
+                if (themeToggleBtn) {
+                     themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+                }
+            }
+        });
+        // --- END COMMUNICATION SCRIPT ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // NOTE: Using a generic column order key for consistency across maintenance/upgrade files
+            const columnOrderKey = 'checklistColumnOrder_maintenance'; 
+            let draggedColumn = null;
+            let dropSucceeded = false;
+            let dataIsDirty = false;
+            let openDropdown = null;
+
+            let draggedRow = null;
+
+            const checklistTable = document.getElementById('checklistTable');
+            const checklistTableBody = document.querySelector('#checklistTable tbody');
+            const checklistTableHead = document.querySelector('#checklistTable thead');
+            const noChecklistsMessage = document.getElementById('noChecklistsMessage');
+            const addChecklistBtn = document.getElementById('addChecklistBtn');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+            const modifySaveBtn = document.getElementById('modifySaveBtn');
+            const resetAllBtn = document.getElementById('resetAllBtn');
+            const saveToFileBtn = document.getElementById('saveToFileBtn');
+            const loadFileInput = document.getElementById('loadFileInput');
+            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+            const downloadImageBtn = document.getElementById('downloadImageBtn');
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const messageBox = document.getElementById('messageBox');
+            
+            const sortableHeaders = document.querySelectorAll('.sortable-header');
+            const filterNameInput = document.getElementById('filter-name');
+            const filterStatusSelect = document.getElementById('filter-status');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+            const reportDetailsCheckboxes = document.querySelectorAll('#report-customization .field-group input[type="checkbox"]');
+            const reportDetailsInputs = document.querySelectorAll('#report-customization .field-group input[type="text"]');
+            const columnSelectCheckboxes = document.querySelectorAll('#columnSelectOptions input[type="checkbox"]');
+
+            let isModifyMode = false;
+            let checklists = [];
+            let currentSort = { column: null, direction: 'asc' };
+            let currentColumnOrder = [];
+
+            function loadTheme() {
+                const savedTheme = localStorage.getItem(themeKey) || 'light';
+                document.body.classList.toggle('dark-mode', savedTheme === 'dark');
+                const isDark = document.body.classList.contains('dark-mode');
+                themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            }
+
+            function toggleTheme() {
+                const isDark = document.body.classList.toggle('dark-mode');
+                localStorage.setItem(themeKey, isDark ? 'dark' : 'light');
+                themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            }
+
+            function loadChecklists() {
+                const storedChecklists = JSON.parse(localStorage.getItem(pageLocalStorageKey) || '[]') || [];
+                checklists = storedChecklists;
+                
+                const storedColumnOrder = JSON.parse(localStorage.getItem(columnOrderKey));
+                if (storedColumnOrder && storedColumnOrder.length > 0) {
+                    currentColumnOrder = storedColumnOrder;
+                } else {
+                    currentColumnOrder = ['select-checkbox', 'move-buttons', 'name', 'status', 'data'];
+                }
+                renderChecklists();
+            }
+
+            function saveChecklists() {
+                localStorage.setItem(pageLocalStorageKey, JSON.stringify(checklists));
+                dataIsDirty = true;
+		window.parent.postMessage({ action: 'dataUpdated' }, '*');
+            }
+
+            function saveColumnOrder() {
+                localStorage.setItem(columnOrderKey, JSON.stringify(currentColumnOrder));
+            }
+
+            function renderChecklists() {
+                let dataToRender = [...checklists];
+                
+                const filterName = filterNameInput.value.toLowerCase();
+                const filterStatus = filterStatusSelect.value;
+                
+                if (filterName) {
+                    dataToRender = dataToRender.filter(item => 
+                        item.name.toLowerCase().includes(filterName) || 
+                        (item.data && item.data.toLowerCase().includes(filterName))
+                    );
+                }
+                
+                if (filterStatus) {
+                    dataToRender = dataToRender.filter(item => item.status === filterStatus);
+                }
+
+                if (currentSort.column) {
+                    const column = currentSort.column;
+                    const direction = currentSort.direction;
+                    dataToRender.sort((a, b) => {
+                        const valA = a[column];
+                        const valB = b[column];
+                        if (typeof valA === 'string' && typeof valB === 'string') {
+                            return direction === 'asc' ? valA.localeCompare(b) : valB.localeCompare(a);
+                        }
+                        if (valA < valB) return direction === 'asc' ? -1 : 1;
+                        if (valA > valB) return direction === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+                }
+                renderTableBody(dataToRender);
+            }
+
+            function renderTableBody(data) {
+                checklistTableBody.innerHTML = '';
+                
+                if (data.length === 0) {
+                    noChecklistsMessage.style.display = 'block';
+                } else {
+                    noChecklistsMessage.style.display = 'none';
+                }
+
+                addChecklistBtn.disabled = !isModifyMode;
+                deleteSelectedBtn.disabled = !isModifyMode || !document.querySelectorAll('.row-checkbox:checked').length;
+                resetAllBtn.disabled = checklists.length === 0;
+                downloadPdfBtn.disabled = checklists.length === 0;
+                downloadImageBtn.disabled = checklists.length === 0;
+                
+                updateTableHeaders();
+                updateModifySaveButtonState();
+                updateControlVisibility();
+
+                data.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.dataset.id = item.id;
+                    row.classList.add(`status-${item.status}`);
+                    // Add draggable attribute if in modify mode
+                    if (isModifyMode) {
+                        row.setAttribute('draggable', 'true');
+                    }
+
+                    const statusDropdownHtml = `
+                        <div class="custom-dropdown-container">
+                            <div class="custom-dropdown-button">${item.status}</div>
+                            <div class="custom-dropdown-options">
+                                <div class="custom-dropdown-option pending" data-value="Pending">Pending</div>
+                                <div class="custom-dropdown-option yes" data-value="Yes">Yes</div>
+                                <div class="custom-dropdown-option no" data-value="No">No</div>
+                            </div>
+                        </div>
+                    `;
+
+                    const moveControlsClass = isModifyMode ? '' : 'hidden-in-view-mode';
+                    const moveButtonsHtml = `<td class="move-controls-cell ${moveControlsClass}"><div class="move-controls"><span class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></span><button onclick="moveChecklistUp('${item.id}')" ${index === 0 ? 'disabled' : ''}><i class="fas fa-arrow-up"></i></button><button onclick="moveChecklistDown('${item.id}')" ${index === data.length - 1 ? 'disabled' : ''}><i class="fas fa-arrow-down"></i></button><button class="add-row-btn" onclick="addChecklist(${index + 1})"><i class="fas fa-plus-square"></i></button><button class="delete-row-btn" onclick="deleteChecklist('${item.id}')"><i class="fas fa-minus-square"></i></button></div></td>`;
+
+                    const columnMap = {
+                        'select-checkbox': `<td class="editable-checkbox-cell ${isModifyMode ? '' : 'hidden-in-view-mode'}"><input type="checkbox" class="row-checkbox" data-id="${item.id}" onchange="updateDeleteButtonState()"></td>`,
+                        'move-buttons': moveButtonsHtml,
+                        'name': `<td contenteditable="${isModifyMode ? 'true' : 'false'}" class="checklist-name-cell ${isModifyMode ? '' : 'readonly-cell'}" onblur="updateChecklistItem('${item.id}', 'name', this.textContent.trim())">${item.name}</td>`,
+                        'status': `<td class="status-cell">${statusDropdownHtml}</td>`,
+                        'data': `<td class="data-block-cell"><div class="data-field-container ${isModifyMode ? '' : 'readonly'}"><textarea class="data-field-wrapper ${isModifyMode ? '' : 'readonly'}" rows="1" onblur="updateChecklistItem('${item.id}', 'data', this.value)" ${isModifyMode ? '' : 'readonly'}>${item.data || ''}</textarea><button class="copy-button" onclick="copyData(this)"><i class="fas fa-copy"></i></button></div></td>`
+                    };
+                    
+                    currentColumnOrder.forEach(column => {
+                        if (columnMap[column]) {
+                            row.insertAdjacentHTML('beforeend', columnMap[column]);
+                        }
+                    });
+
+                    checklistTableBody.appendChild(row);
+                    
+                    const dropdownContainer = row.querySelector('.custom-dropdown-container');
+                    const dropdownBtn = row.querySelector('.custom-dropdown-button');
+                    const dropdownOptions = row.querySelector('.custom-dropdown-options');
+                    
+                    dropdownBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleDropdown(dropdownContainer, dropdownOptions, dropdownBtn);
+                    });
+                    dropdownOptions.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('custom-dropdown-option')) {
+                            const newValue = e.target.dataset.value;
+                            updateChecklistItem(item.id, 'status', newValue);
+                        }
+                    });
+                    
+                    updateStatusColor(dropdownBtn, item.status);
+                });
+                updateDeleteButtonState();
+                if (isModifyMode) {
+                    addDragAndDropListeners();
+                }
+            }
+
+            function addDragAndDropListeners() {
+                const rows = checklistTableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    row.addEventListener('dragstart', handleRowDragStart);
+                    row.addEventListener('dragover', handleRowDragOver);
+                    row.addEventListener('dragleave', handleRowDragLeave);
+                    row.addEventListener('drop', handleRowDrop);
+                    row.addEventListener('dragend', handleRowDragEnd);
+                });
+            }
+
+            function handleRowDragStart(e) {
+                draggedRow = e.target.closest('tr');
+                if (!draggedRow) return;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggedRow.dataset.id);
+                setTimeout(() => {
+                    draggedRow.classList.add('dragging-row');
+                }, 0);
+            }
+
+            function handleRowDragOver(e) {
+                e.preventDefault();
+                const targetRow = e.target.closest('tr');
+                if (!targetRow || targetRow === draggedRow || targetRow.parentNode !== draggedRow.parentNode) return;
+                
+                const rect = targetRow.getBoundingClientRect();
+                const isAfter = e.clientY > rect.top + rect.height / 2;
+                
+                if (isAfter) {
+                    checklistTableBody.insertBefore(draggedRow, targetRow.nextSibling);
+                } else {
+                    checklistTableBody.insertBefore(draggedRow, targetRow);
+                }
+            }
+
+            function handleRowDragLeave(e) {
+                // Not strictly needed but good practice for cleanup
+            }
+
+            function handleRowDrop(e) {
+                e.preventDefault();
+                if (!draggedRow) return;
+                
+                const droppedOnRow = e.target.closest('tr');
+                if (!droppedOnRow || draggedRow === droppedOnRow) return;
+                
+                // Get the current order of elements in the DOM
+                const newOrder = Array.from(checklistTableBody.querySelectorAll('tr')).map(row => row.dataset.id);
+
+                // Find the new order of the checklist data based on the DOM order
+                const newChecklists = newOrder.map(id => checklists.find(item => item.id === id));
+                checklists = newChecklists;
+                
+                saveChecklists();
+                renderChecklists(); // Re-render to ensure state matches DOM and cleanup
+                showMessage("Checklist reordered!", "success");
+            }
+
+            function handleRowDragEnd(e) {
+                if (draggedRow) {
+                    draggedRow.classList.remove('dragging-row');
+                }
+                draggedRow = null;
+            }
+
+            function toggleDropdown(container, dropdown, button) {
+                if (openDropdown && openDropdown !== dropdown) {
+                    openDropdown.classList.remove('show');
+                    document.querySelector('.custom-dropdown-container.show')?.classList.remove('show');
+                    document.querySelector('.custom-dropdown-button.active')?.classList.remove('active');
+                }
+                container.classList.toggle('show');
+                dropdown.classList.toggle('show');
+                button.classList.toggle('active', dropdown.classList.contains('show'));
+                openDropdown = dropdown.classList.contains('show') ? dropdown : null;
+            }
+
+            function updateStatusColor(button, status) {
+                button.classList.remove('pending', 'yes', 'no');
+                switch (status) {
+                    case 'Pending':
+                        button.classList.add('pending');
+                        break;
+                    case 'Yes':
+                        button.classList.add('yes');
+                        break;
+                    case 'No':
+                        button.classList.add('no');
+                        break;
+                }
+            }
+
+            document.addEventListener('click', (e) => {
+                if (openDropdown && !e.target.closest('.custom-dropdown-container')) {
+                    openDropdown.classList.remove('show');
+                    document.querySelector('.custom-dropdown-container.show')?.classList.remove('show');
+                    document.querySelector('.custom-dropdown-button.active')?.classList.remove('active');
+                    openDropdown = null;
+                }
+            });
+
+            function updateTableHeaders() {
+                const headerRow = checklistTableHead.querySelector('tr');
+                const sortedHeaderElements = currentColumnOrder.map(column => headerRow.querySelector(`[data-column="${column}"]`));
+                headerRow.innerHTML = '';
+                sortedHeaderElements.forEach(el => {
+                    if(el) headerRow.appendChild(el);
+                });
+                document.querySelectorAll('.sortable-header').forEach(header => header.addEventListener('click', () => sortTable(header.dataset.column)));
+                document.querySelectorAll('th.draggable').forEach(header => {
+                    header.setAttribute('draggable', true);
+                    header.addEventListener('dragstart', handleDragStart);
+                    header.addEventListener('dragover', handleDragOver);
+                    header.addEventListener('drop', handleDrop);
+                    header.addEventListener('dragenter', handleDragEnter);
+                    header.addEventListener('dragleave', handleDragLeave);
+                    header.addEventListener('dragend', handleDragEnd);
+                });
+            }
+            
+            function handleDragStart(e) {
+                draggedColumn = e.target.closest('th.draggable');
+                if (!draggedColumn) return;
+                dropSucceeded = false;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggedColumn.dataset.column);
+                setTimeout(() => draggedColumn.classList.add('dragging'), 0);
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault();
+                const targetColumn = e.target.closest('th.draggable');
+                if (!targetColumn || targetColumn === draggedColumn) return;
+                const targetRect = targetColumn.getBoundingClientRect();
+                const isAfter = e.clientX > targetRect.left + targetRect.width / 2;
+                if (isAfter) {
+                    targetColumn.parentNode.insertBefore(draggedColumn, targetColumn.nextSibling);
+                } else {
+                    targetColumn.parentNode.insertBefore(draggedColumn, targetColumn);
+                }
+            }
+            
+            function handleDrop(e) {
+                e.preventDefault();
+                if (!draggedColumn) return;
+                dropSucceeded = true;
+                const headerCells = Array.from(checklistTableHead.querySelector('tr').children);
+                currentColumnOrder = headerCells.map(th => th.dataset.column);
+                saveColumnOrder();
+                renderChecklists();
+            }
+
+            function handleDragEnter(e) { e.preventDefault(); }
+            function handleDragLeave(e) {}
+            
+            function handleDragEnd(e) {
+                if (!dropSucceeded) renderChecklists();
+                document.querySelectorAll('th.draggable').forEach(th => th.classList.remove('dragging'));
+                draggedColumn = null;
+            }
+
+            function sortTable(column) {
+                if (currentSort.column === column) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = column;
+                    currentSort.direction = 'asc';
+                }
+                renderChecklists();
+            }
+            
+            function updateChecklistItem(id, field, value) {
+                const index = checklists.findIndex(item => item.id === id);
+                if (index > -1) {
+                    checklists[index][field] = value;
+                    saveChecklists();
+                    renderChecklists();
+                }
+            }
+            
+            function addChecklist(index = checklists.length) {
+                const newItem = {
+                    id: Date.now().toString(),
+                    name: `New Checklist ${checklists.length + 1}`,
+                    data: ``,
+                    status: 'Pending',
+                    createdAt: Date.now()
+                };
+                checklists.splice(index, 0, newItem);
+                saveChecklists();
+                renderChecklists();
+                showMessage("New checklist added!", "success");
+            }
+
+            function deleteChecklist(id) {
+                checklists = checklists.filter(item => item.id !== id);
+                saveChecklists();
+                renderChecklists();
+                showMessage("Checklist deleted!", "success");
+            }
+            
+            function deleteSelectedChecklists() {
+                const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(checkbox => checkbox.dataset.id);
+                if (selectedIds.length === 0) {
+                    showMessage('Please select at least one checklist to delete.', 'info');
+                    return;
+                }
+                checklists = checklists.filter(item => !selectedIds.includes(item.id));
+                saveChecklists();
+                renderChecklists();
+                showMessage("Selected checklists deleted!", "success");
+            }
+
+            function updateDeleteButtonState() {
+                const anyChecked = document.querySelectorAll('.row-checkbox:checked').length > 0;
+                deleteSelectedBtn.disabled = !anyChecked;
+                const allCheckboxes = document.querySelectorAll('.row-checkbox');
+                selectAllCheckbox.checked = allCheckboxes.length > 0 && allCheckboxes.length === document.querySelectorAll('.row-checkbox:checked').length;
+            }
+
+            function toggleSelectAll() {
+                document.querySelectorAll('.row-checkbox').forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
+                updateDeleteButtonState();
+            }
+
+            function toggleModifySaveMode() {
+                isModifyMode = !isModifyMode;
+                renderChecklists();
+            }
+
+            function updateModifySaveButtonState() {
+                if (isModifyMode) {
+                    modifySaveBtn.innerHTML = '<i class="fas fa-save"></i>';
+                    modifySaveBtn.className = 'neumorphic-btn success';
+                    modifySaveBtn.setAttribute('aria-label', 'Save Checklist');
+                } else {
+                    modifySaveBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                    modifySaveBtn.className = 'neumorphic-btn info';
+                    modifySaveBtn.setAttribute('aria-label', 'Modify Checklist');
+                }
+            }
+
+            function updateControlVisibility() {
+                const isHidden = !isModifyMode;
+                addChecklistBtn.classList.toggle('hidden-in-view-mode', isHidden);
+                deleteSelectedBtn.classList.toggle('hidden-in-view-mode', isHidden);
+                document.querySelectorAll('.editable-checkbox-cell, .move-controls-cell').forEach(cell => cell.classList.toggle('hidden-in-view-mode', isHidden));
+                document.querySelector('#checklistTable thead th[data-column="select-checkbox"]').classList.toggle('hidden-in-view-mode', isHidden);
+                document.querySelector('#checklistTable thead th[data-column="move-buttons"]').classList.toggle('hidden-in-view-mode', isHidden);
+            }
+
+            function resetAllStatus() {
+                checklists.forEach(item => item.status = 'Pending');
+                saveChecklists();
+                renderChecklists();
+                showMessage("All statuses reset to Pending.", "success");
+            }
+
+            function moveChecklistUp(id) {
+                const index = checklists.findIndex(item => item.id === id);
+                if (index > 0) {
+                    [checklists[index], checklists[index - 1]] = [checklists[index - 1], checklists[index]];
+                    saveChecklists();
+                    renderChecklists();
+                }
+            }
+
+            function moveChecklistDown(id) {
+                const index = checklists.findIndex(item => item.id === id);
+                if (index < checklists.length - 1) {
+                    [checklists[index], checklists[index + 1]] = [checklists[index + 1], checklists[index]];
+                    saveChecklists();
+                    renderChecklists();
+                }
+            }
+            
+            function autoExpand(field) {
+                field.style.height = 'auto';
+                field.style.height = (field.scrollHeight) + 'px';
+            }
+
+            function copyData(buttonElement) {
+                const textarea = buttonElement.parentElement.querySelector('.data-field-wrapper');
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    const originalIcon = buttonElement.innerHTML;
+                    buttonElement.innerHTML = '<i class="fas fa-check"></i>';
+                    buttonElement.classList.add('copied');
+                    showMessage("Data copied to clipboard!", "success");
+                    setTimeout(() => {
+                        buttonElement.innerHTML = originalIcon;
+                        buttonElement.classList.remove('copied');
+                    }, 1500);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    showMessage("Failed to copy. Please try again.", "error");
+                });
+            }
+            
+            function showMessage(message, type = 'info') {
+                const iconClass = {
+                    info: 'fa-solid fa-circle-info',
+                    success: 'fa-solid fa-check-circle',
+                    error: 'fa-solid fa-triangle-exclamation'
+                }[type];
+                messageBox.innerHTML = `<i class="${iconClass}"></i> ${message}`;
+                messageBox.className = `message-box ${type}`;
+                setTimeout(() => { messageBox.classList.add('show'); }, 10);
+                setTimeout(() => { messageBox.classList.remove('show'); }, 3000);
+            }
+
+            function saveToFile() {
+                if (checklists.length === 0) {
+                    showMessage("Cannot save an empty checklist.", "error");
+                    return;
+                }
+                const dataToSave = JSON.stringify(checklists, null, 2);
+                const blob = new Blob([dataToSave], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                const now = new Date();
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const year = now.getFullYear();
+                const formattedDate = `${day}-${month}-${year}`;
+                const filename = `maintenance-checklist-backup-${formattedDate}.json`;
+
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                dataIsDirty = false;
+                showMessage("Backup file saved!", "success");
+            }
+
+            function loadFromFile(event) {
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const content = e.target.result;
+                        const loadedChecklists = JSON.parse(content);
+                        if (Array.isArray(loadedChecklists)) {
+                            checklists = loadedChecklists;
+                            saveChecklists();
+                            renderChecklists();
+                            showMessage("Checklist restored from backup file!", "success");
+                        } else {
+                            throw new Error("Invalid file format.");
+                        }
+                    } catch (error) {
+                        showMessage("Error loading file. Make sure it's a valid checklist JSON file.", "error");
+                        console.error("File loading error:", error);
+                    } finally {
+                        event.target.value = null;
+                    }
+                };
+                reader.readAsText(file);
+            }
+            
+            window.addEventListener('beforeunload', (event) => {
+                if (dataIsDirty) {
+                    event.preventDefault();
+                    event.returnValue = '';
+                }
+            });
+
+            function getSelectedColumns() {
+                return Array.from(document.querySelectorAll('#columnSelectOptions input:checked')).map(cb => cb.dataset.column);
+            }
+
+            function getReportHeaderData() {
+                const headerData = {};
+                document.querySelectorAll('.report-header-fields input[type="checkbox"]:checked').forEach(checkbox => {
+                    const inputId = checkbox.nextElementSibling.nextElementSibling.getAttribute('for');
+                    const input = document.getElementById(inputId);
+                    if(input) {
+                         headerData[checkbox.dataset.label] = input.value;
+                    }
+                });
+                return headerData;
+            }
+
+            function createExportTable(selectedColumns) {
+                const tempTable = document.createElement('table');
+                tempTable.className = 'export-table';
+                
+                const thead = tempTable.createTHead();
+                const headerRow = thead.insertRow();
+                headerRow.className = 'export-table-header';
+                selectedColumns.forEach(column => {
+                    const th = document.createElement('th');
+                    const header = document.querySelector(`[data-column="${column}"]`);
+                    th.textContent = header.dataset.label || header.textContent.trim();
+                    headerRow.appendChild(th);
+                });
+
+                const tbody = tempTable.createTBody();
+                checklists.forEach(item => {
+                    const row = tbody.insertRow();
+                    row.className = `status-${item.status}`;
+                    selectedColumns.forEach(column => {
+                        const cell = row.insertCell();
+                        if (item[column] !== undefined) {
+                            cell.textContent = item[column];
+                        }
+                        if (column === 'data') {
+                            cell.style.whiteSpace = 'pre-wrap';
+                            cell.style.wordBreak = 'break-word';
+                        }
+                    });
+                });
+                return tempTable;
+            }
+            
+            async function downloadReport(asImage) {
+                const selectedColumns = getSelectedColumns();
+                if (selectedColumns.length === 0) {
+                    showMessage('Please select at least one column to download.', 'error');
+                    return;
+                }
+                const headerData = getReportHeaderData();
+                const tempTable = createExportTable(selectedColumns);
+                
+                const reportContainer = document.createElement('div');
+                reportContainer.style.fontFamily = 'Inter, sans-serif';
+                reportContainer.style.padding = '20px';
+                reportContainer.style.backgroundColor = 'white';
+                reportContainer.style.width = '1200px';
+                reportContainer.style.position = 'absolute';
+                reportContainer.style.left = '-9999px';
+                reportContainer.style.top = '0';
+
+                const headerContainer = document.createElement('div');
+                headerContainer.style.marginBottom = '15px';
+                headerContainer.style.display = 'grid';
+                headerContainer.style.gridTemplateColumns = '1fr 1fr';
+                headerContainer.style.gap = '8px 20px';
+                headerContainer.style.backgroundColor = '#f6f8fa';
+                headerContainer.style.padding = '15px';
+                headerContainer.style.borderRadius = '8px';
+                headerContainer.style.border = '1px solid #d0d7de';
+                headerContainer.style.boxSizing = 'border-box';
+
+                const headerItems = [
+                    { label: 'Quicklook ID', value: headerData['Quicklook ID'] },
+                    { label: 'Site ID', value: headerData['Site ID'] },
+                    { label: 'Change No', value: headerData['Change No'] },
+                    { label: 'Customer', value: headerData['Customer'] }
+                ];
+
+                headerItems.forEach(item => {
+                    if (Object.prototype.hasOwnProperty.call(headerData, item.label)) {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.style.fontSize = '12px';
+                        itemDiv.style.color = '#333';
+                        itemDiv.style.wordBreak = 'break-word';
+                        itemDiv.innerHTML = `<b>${item.label}:</b> ${headerData[item.label] || ''}`;
+                        headerContainer.appendChild(itemDiv);
+                    }
+                });
+                
+                const tableWrapper = document.createElement('div');
+                tableWrapper.className = 'export-table-wrapper';
+                tableWrapper.appendChild(tempTable);
+                
+                reportContainer.appendChild(headerContainer);
+                reportContainer.appendChild(tableWrapper);
+                document.body.appendChild(reportContainer);
+
+                try {
+                    const canvas = await html2canvas(reportContainer, { scale: 2.5, useCORS: true });
+                    if (asImage) {
+                        const link = document.createElement('a');
+                        link.download = 'maintenance-checklist-report.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } else {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF('p', 'mm', 'a4');
+                        const imgData = canvas.toDataURL('image/png');
+                        const imgWidth = 190;
+                        const pageHeight = 295; 
+                        const imgHeight = canvas.height * imgWidth / canvas.width;
+                        let heightLeft = imgHeight;
+                        let position = 10;
+                        doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                        heightLeft -= (pageHeight - 20);
+                        while (heightLeft > 0) {
+                            position = heightLeft - imgHeight + 10;
+                            doc.addPage();
+                            doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                            heightLeft -= (pageHeight - 20);
+                        }
+                        doc.save('maintenance-checklist-report.pdf');
+                    }
+                     showMessage('Report downloaded successfully!', 'success');
+                } catch (error) {
+                    console.error('Failed to generate report:', error);
+                    showMessage('Could not generate report. Please try again.', 'error');
+                } finally {
+                    document.body.removeChild(reportContainer);
+                }
+            }
+
+            // Event listeners
+            addChecklistBtn.addEventListener('click', () => addChecklist(checklists.length));
+            deleteSelectedBtn.addEventListener('click', deleteSelectedChecklists);
+            modifySaveBtn.addEventListener('click', toggleModifySaveMode);
+            resetAllBtn.addEventListener('click', resetAllStatus);
+            saveToFileBtn.addEventListener('click', saveToFile);
+            loadFileInput.addEventListener('change', loadFromFile);
+            downloadPdfBtn.addEventListener('click', () => downloadReport(false));
+            downloadImageBtn.addEventListener('click', () => downloadReport(true));
+            themeToggleBtn.addEventListener('click', toggleTheme);
+            filterNameInput.addEventListener('input', renderChecklists);
+            filterStatusSelect.addEventListener('change', renderChecklists);
+
+            // Globalize functions
+            window.updateChecklistItem = updateChecklistItem;
+            window.updateDeleteButtonState = updateDeleteButtonState;
+            window.copyData = copyData;
+            window.moveChecklistUp = moveChecklistUp;
+            window.moveChecklistDown = moveChecklistDown;
+            window.toggleSelectAll = toggleSelectAll;
+            window.addChecklist = addChecklist;
+            window.deleteChecklist = deleteChecklist;
+            window.autoExpand = autoExpand;
+            
+
+            // Initial load
+            loadTheme();
+            loadChecklists();
+            
+            window.parent.postMessage({ action: 'pageReady', file: 'maintainence.html' }, '*');
+        });
+    </script>
+</body>
+</html>
