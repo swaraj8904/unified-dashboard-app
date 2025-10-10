@@ -618,9 +618,10 @@
 // NOTE: The CLOUD_ENDPOINT variable must be defined outside this function block
 // with your specific CSV publish link.
 
+// NOTE: The CLOUD_ENDPOINT variable must be defined outside this function block
+// with your specific CSV publish link.
+
 async function cloudLoad() {
-    // You must ensure CLOUD_CSV_ENDPOINT is defined outside this function 
-    // with your published CSV link.
     const CLOUD_CSV_ENDPOINT = CLOUD_ENDPOINT; 
 
     try {
@@ -628,18 +629,22 @@ async function cloudLoad() {
         
         if (!response.ok) throw new Error("Cloud CSV fetch failed.");
 
-        // Read the response as pure text (the CSV content)
+        // 1. Read the response as pure text (the CSV content)
         const csvText = await response.text();
 
         // CRITICAL: The data is in cell A2, which is the second row of the CSV.
         const lines = csvText.trim().split('\n');
-        if (lines.length < 2) return null;
+        if (lines.length < 2) throw new Error("CSV data is empty.");
 
-        // The data payload is the second line of the CSV (row A2). 
-        // 1. We strip surrounding quotes (if present) to prevent the JSON.parse error.
-        const rawData = lines[1].trim().replace(/^"|"$/g, '');
+        // 2. Extract the second line (A2 content)
+        let rawData = lines[1].trim(); 
         
-        // 2. The code then attempts to parse the clean JSON string.
+        // 3. FINAL FIX: Robustly strip surrounding quotes (", ', or space) left by the CSV parser.
+        // We use a regular expression to strip quotes or spaces from the beginning and end.
+        // This is necessary because the CSV engine sometimes double-quotes the JSON string.
+        rawData = rawData.replace(/^["']|["']$/g, '').trim(); 
+        
+        // 4. Parse the clean JSON string
         return JSON.parse(rawData);
 
     } catch (error) {
@@ -908,6 +913,7 @@ async function cloudSave(data) {
 </body>
 
 </html>
+
 
 
 
