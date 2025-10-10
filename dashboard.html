@@ -619,7 +619,8 @@
 // with your specific CSV publish link.
 
 async function cloudLoad() {
-    // We now fetch the publicly published CSV file directly.
+    // You must ensure CLOUD_CSV_ENDPOINT is defined outside this function 
+    // with your published CSV link.
     const CLOUD_CSV_ENDPOINT = CLOUD_ENDPOINT; 
 
     try {
@@ -635,19 +636,19 @@ async function cloudLoad() {
         if (lines.length < 2) return null;
 
         // The data payload is the second line of the CSV (row A2). 
-        // We strip surrounding quotes (if present) and parse the JSON string stored inside that cell.
+        // 1. We strip surrounding quotes (if present) to prevent the JSON.parse error.
         const rawData = lines[1].trim().replace(/^"|"$/g, '');
         
-        // The data is returned as a JSON string, which must be parsed twice
+        // 2. The code then attempts to parse the clean JSON string.
         return JSON.parse(rawData);
 
     } catch (error) {
         console.error("Cloud Load Error:", error);
-        // Data is safe locally, so we return null to proceed with local data.
+        // This is acceptable, as the data remains local
         return null;
     }
 }
-
+        
 // CRITICAL: cloudSave is DISABLED because the Google Sheets published CSV link is read-only.
 async function cloudSave(data) {
     // This message will now appear anytime you try to save, confirming why.
@@ -907,6 +908,7 @@ async function cloudSave(data) {
 </body>
 
 </html>
+
 
 
 
