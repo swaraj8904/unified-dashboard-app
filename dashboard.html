@@ -605,7 +605,7 @@
 
         // --- CLOUD SYNC CONFIG & LOGIC (Google Sheets) ---
         // !!! IMPORTANT: Replace 'YOUR_WEB_APP_URL' with the Web App URL from Google Apps Script !!!
-        const CLOUD_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzNqAXbRtet4pRVnJPFtj4gD0ayE9dW7c8zxzJC_uVaZ44Ke3OhhChcVcVHxmO49NTv/exec'; 
+        const CLOUD_ENDPOINT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHYPjlTw5FQkhVkugin8_cSelD_jckiV4xz4uNaQ20LhyhQY6j4XtoxFOhjQTzsTuOgMxjNqmMtsI1/pub?output=csv'; 
         let autoSaveDirty = false;
         let autoSaveTimer = null;
         const AUTO_SAVE_INTERVAL = 5000; // 5 seconds of inactivity
@@ -615,43 +615,45 @@
             autoSaveTimer = setInterval(triggerCloudSave, AUTO_SAVE_INTERVAL);
         }
 
-        async function cloudLoad() {
-            try {
-                const response = await fetch(CLOUD_ENDPOINT, { method: 'GET' });
-                const result = await response.json();
-                if (result.status === 'success' && result.data) {
-                    return JSON.parse(result.data);
-                } else {
-                    return null; 
-                }
-            } catch (error) {
-                console.error("Cloud Load Error:", error);
-                return null; 
-            }
-        }
+// NOTE: The CLOUD_ENDPOINT variable must be defined outside this function block
+// with your specific CSV publish link.
 
-        async function cloudSave(data) {
-            if (!data) return; 
-            
-            const dataToUpload = JSON.stringify(data);
+async function cloudLoad() {
+    // We now fetch the publicly published CSV file directly.
+    const CLOUD_CSV_ENDPOINT = CLOUD_ENDPOINT; 
 
-            try {
-                const response = await fetch(CLOUD_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' }, 
-                    body: JSON.stringify({ data: dataToUpload })
-                });
-                if (response.ok) {
-                    showMessage("Cloud sync complete!", "success");
-                    autoSaveDirty = false;
-                } else {
-                    throw new Error("Cloud save failed.");
-                }
-            } catch (error) {
-                console.error("Cloud Save Error:", error);
-                showMessage("Cloud sync failed. Data is local only.", "error");
-            }
-        }
+    try {
+        const response = await fetch(CLOUD_CSV_ENDPOINT, { method: 'GET' });
+        
+        if (!response.ok) throw new Error("Cloud CSV fetch failed.");
+
+        // Read the response as pure text (the CSV content)
+        const csvText = await response.text();
+
+        // CRITICAL: The data is in cell A2, which is the second row of the CSV.
+        const lines = csvText.trim().split('\n');
+        if (lines.length < 2) return null;
+
+        // The data payload is the second line of the CSV (row A2). 
+        // We strip surrounding quotes (if present) and parse the JSON string stored inside that cell.
+        const rawData = lines[1].trim().replace(/^"|"$/g, '');
+        
+        // The data is returned as a JSON string, which must be parsed twice
+        return JSON.parse(rawData);
+
+    } catch (error) {
+        console.error("Cloud Load Error:", error);
+        // Data is safe locally, so we return null to proceed with local data.
+        return null;
+    }
+}
+
+// CRITICAL: cloudSave is DISABLED because the Google Sheets published CSV link is read-only.
+async function cloudSave(data) {
+    // This message will now appear anytime you try to save, confirming why.
+    showMessage("Cloud sync failed. Data is local only (CSV is read-only).", "error");
+    return false;
+}
 
         function triggerCloudSave() {
             if (!autoSaveDirty) return;
@@ -905,6 +907,7 @@
 </body>
 
 </html>
+
 
 
 
